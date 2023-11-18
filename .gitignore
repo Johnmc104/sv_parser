@@ -1,0 +1,16 @@
+*.log
+antlr/*
+!antlr/antlr-4.8-complete.jar
+java
+
+systemverilog/*
+!systemverilog/*.g4
+!systemverilog/examples
+systemverilog/examples/*
+!systemverilog/examples/*.sv
+
+verilog/*
+!verilog/*.g4
+!verilog/examples
+verilog/examples/*
+!verilog/examples/*.v
