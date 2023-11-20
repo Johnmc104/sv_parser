@@ -1,5 +1,6 @@
 import string
 import sys
+import time
 from antlr4 import FileStream, CommonTokenStream
 from systemverilog.SystemVerilogLexer import SystemVerilogLexer
 from systemverilog.SystemVerilogParser import SystemVerilogParser
@@ -36,6 +37,7 @@ class classVisitor(SystemVerilogParserVisitor):
 
 
 def main(argv):
+  start = time.time()
   input_stream = FileStream('test.sv')
   lexer = SystemVerilogLexer(input_stream)
   stream = CommonTokenStream(lexer)
@@ -43,6 +45,7 @@ def main(argv):
   visitor = classVisitor()
   context = parser.source_text()
   ast = visitor.visitSource_text(context)
+  print(f"Elapsed time: {time.time() - start} s")
 
 if __name__ == "__main__":
   main(sys.argv)
