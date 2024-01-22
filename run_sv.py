@@ -38,13 +38,16 @@ class classVisitor(SystemVerilogParserVisitor):
 
 def main(argv):
   start = time.time()
+
   input_stream = FileStream('test.sv')
   lexer = SystemVerilogLexer(input_stream)
   stream = CommonTokenStream(lexer)
   parser = SystemVerilogParser(stream)
+  
   visitor = classVisitor()
   context = parser.source_text()
   ast = visitor.visitSource_text(context)
+
   print(f"Elapsed time: {time.time() - start} s")
 
 if __name__ == "__main__":

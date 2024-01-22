@@ -16,12 +16,12 @@ verilog= \
 	verilog/VerilogParser.g4 \
 	verilog/VerilogPreParser.g4
 
-language=${systemverilog}
+language=${verilog}
 
 python:pip3 install antlr4-python3-runtime==${antlr_version}
 
 test:
 	java org.antlr.v4.Tool
 
-run:
+gen:
 	${antlr4} -no-listener -visitor -Dlanguage=Python3 ${language}
