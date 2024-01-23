@@ -14,6 +14,7 @@ import re
 
 class ParseResult:
   def __init__(self):
+    self.modules = []
     self.ports = [] # list of dict
 
   def set_ports(self, matches):
@@ -41,10 +42,65 @@ class ParseResult:
     else:
       print("No results to update.")
 
+  def gen_inst(self):
+    module_name = self.modules[0]
 
-class moduleVisitor(VerilogParserVisitor):
-  def __init__(self):
-    self.results = ParseResult()
+    msg_inst = f"module inst_{module_name}(\n"
+    #print(f"module inst_{module_name}(")
+
+    t_ports = []
+    for i, port in enumerate(self.ports):
+      t_ports.append(port['name'])
+
+    #print(temp_ports)
+      
+    t_ports = [port.replace('i_', 'w_').replace('o_', 'w_') for port in t_ports]
+
+    max_len = max(len(port) for port in t_ports)
+
+    msg_port_dec = ""
+    for i, port in enumerate(t_ports):
+      org_port = self.ports[i]
+
+      # gen port info
+      msg_port_info = ""
+      if org_port['dir']   != '': 
+        if org_port['dir'] == 'input':
+          msg_port_info += f"{org_port['dir']}  "
+        else:
+          msg_port_info += f"{org_port['dir']} "
+      if 'type' in org_port and org_port['type']  != '': 
+        if org_port['type'] == 'reg':
+          msg_port_info += f"{org_port['type']}  "
+        else:
+          msg_port_info += f"{org_port['type']} "
+      if 'msb' in org_port and org_port['msb']   != '':
+        msg_port_info += f"[{org_port['msb']}:{org_port['lsb']}] "
+
+        # check if signal starts with 'w_' and generate signal declaration
+        if port.startswith('w_'):
+          size = int(org_port['msb']) - int(org_port['lsb']) + 1
+          msg_port_dec += f"wire [{size-1}:0] {port}; \n"
+      #if org_port['name']  != '': 
+      #  msg_port_info += f"{org_port['name']} "
+      #print(msg_port_info)
+
+      if i == len(t_ports) - 1:
+        #print(f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ) // {msg_port_info}")
+        msg_inst += f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ) // {msg_port_info}\n"
+      else:
+        #print(f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ),// {msg_port_info}")
+        msg_inst += f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ),// {msg_port_info}\n"
+
+    msg_inst += f"\n);"
+
+    print(msg_port_dec)
+    print(msg_inst)
+
+
+class PortVisitor(VerilogParserVisitor):
+  def __init__(self, results):
+    self.results = results
 
   def visitPort_declaration(self, ctx: VerilogParser.Port_declarationContext):
     rtn = ctx.inout_declaration()
@@ -61,6 +117,16 @@ class moduleVisitor(VerilogParserVisitor):
     if rtn is not None: 
       #print('output:',rtn.getText())
       self.results.get_port_matches(rtn.getText())
+
+class ModuleVisitor(VerilogParserVisitor):
+  def __init__(self, results):
+    self.results = results
+
+  def visitModule_declaration(self, ctx:VerilogParser.Module_declarationContext):
+    rtn = ctx.module_identifier()
+    if rtn is not None: 
+      #print('module_name:',rtn.getText())
+      self.results.modules.append(rtn.getText())
 
 
 def main(argv):
@@ -79,14 +145,23 @@ def main(argv):
   lexer = VerilogLexer(input_stream)
   stream = CommonTokenStream(lexer)
   parser = VerilogParser(stream)
-
-  visitor = moduleVisitor()
   context = parser.source_text()
-  ast = visitor.visitSource_text(context)
+
+  parse_result = ParseResult()
+
+  visitor_module = ModuleVisitor(parse_result)
+  ast = visitor_module.visitSource_text(context)
+
+  visitor_port = PortVisitor(parse_result)
+  ast = visitor_port.visitSource_text(context)
+  
+  #print (ast)
 
   #print("=====================================")
-  #for port in visitor.results.ports:
+  #for port in parse_result.ports:
   #  print("Signal: ", port)
+
+  parse_result.gen_inst()
 
   print(f"Elapsed time: {time.time() - start} s")
 

@@ -65,19 +65,19 @@ module cmsdk_iop_gpio
     input          FCLK,      // Free-running clock
     input          HCLK,      // System clock
     input          HRESETn,   // System reset
-    input  wire        IOSEL,     // Decode for peripheral
-    input  wire [11:0] IOADDR,    // I/O transfer address
-    input  wire        IOWRITE,   // I/O transfer direction
-    input  wire [1:0]  IOSIZE,    // I/O transfer size
-    input  wire        IOTRANS,   // I/O transaction
-    input  wire [31:0] IOWDATA,   // I/O write data bus
+    input  wire        i_IOSEL,     // Decode for peripheral
+    input  wire [11:0] i_IOADDR,    // I/O transfer address
+    input  wire        i_IOWRITE,   // I/O transfer direction
+    input  wire [1:0]  i_IOSIZE,    // I/O transfer size
+    input  wire        i_IOTRANS,   // I/O transaction
+    input  wire [31:0] i_IOWDATA,   // I/O write data bus
   
     input  wire [3:0]  ECOREVNUM, // Engineering-change-order revision bits
   
     input  wire [15:0] PORTIN,    // GPIO Interface input
   
     // Outputs
-    output wire [31:0] IORDATA,   // I/0 read data bus
+    output wire [31:0] o_IORDATA,   // I/0 read data bus
   
     output wire [15:0] PORTOUT,   // GPIO output
     output wire [15:0] PORTEN,    // GPIO output enable
