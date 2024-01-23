@@ -14,3 +14,7 @@ verilog/*
 !verilog/examples
 verilog/examples/*
 !verilog/examples/*.v
+
+dist
+build
+run_v.spec
