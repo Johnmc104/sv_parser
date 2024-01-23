@@ -16,6 +16,7 @@ class ParseResult:
   def __init__(self):
     self.modules = []
     self.ports = [] # list of dict
+    self.params = []
 
   def set_ports(self, matches):
     for i, match in enumerate(matches):
@@ -35,12 +36,45 @@ class ParseResult:
 
 
   def get_port_matches(self, text):
-    matches = re.findall(r'(input|output|inout)(wire|reg)?(?:\[(\d+):(\d+)\])?(\w+)', text)
+    #print(self.params)
+
+    #replace param
+    for i, param in enumerate(self.params):
+      param_name = param['name']
+      param_value = param['value']
+      param_value = int(param_value) - 1
+      param_value = str(param_value)
+      pattern = f'{param_name}-1'
+      #print (pattern)
+      #text = text.replace(pattern, param_value)
+      text = re.sub(pattern, param_value, text)
+
+    #print(text)
+
+    matches = re.findall(r'(input|output|inout)(wire|reg|signed)?(?:\[(\d+):(\d+)\])?(\w+)', text)
 
     if len(matches) > 0:
       self.set_ports(matches)
     else:
       print("No results to update.")
+
+  def get_param_matches(self, text):
+    matches = re.findall(r'(\w+)\s*=\s*(\d+)', text)
+
+    #print (matches)
+
+    for i, match in enumerate(matches):
+      result = {}
+      name, value = match
+
+      name = name.replace('parameter', '')
+      result['name'] = name
+      result['value'] = value
+
+      self.params.append(result)
+
+    #print (self.params)
+
 
   def gen_inst(self):
     module_name = self.modules[0]
@@ -92,7 +126,7 @@ class ParseResult:
         #print(f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ),// {msg_port_info}")
         msg_inst += f"  .{org_port['name']:<{max_len}} ({port:<{max_len}} ),// {msg_port_info}\n"
 
-    msg_inst += f"\n);"
+    msg_inst += f");"
 
     print(msg_port_dec)
     print(msg_inst)
@@ -127,6 +161,17 @@ class ModuleVisitor(VerilogParserVisitor):
     if rtn is not None: 
       #print('module_name:',rtn.getText())
       self.results.modules.append(rtn.getText())
+
+    rtn = ctx.module_parameter_port_list()
+    if rtn is not None: 
+      #print('param_list:',rtn.getText())
+      self.results.get_param_matches(rtn.getText())
+      
+    #rtn = ctx.list_of_port_declarations()
+    #if rtn is not None: 
+    #  print('port_list:',rtn.getText())
+    #  #self.results.ports.append(rtn.getText())
+    #  #self.results.get_port_matches(rtn.getText())
 
 
 def main(argv):

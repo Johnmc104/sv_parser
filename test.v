@@ -55,7 +55,9 @@ module cmsdk_iop_gpio
     parameter ALTERNATE_FUNC_DEFAULT = 16'h0000,
   
     // By default use little endian
-    parameter BE                     = 0
+    parameter BE                     = 0,
+    parameter IOADDR_WIDTH           = 12,
+    parameter GPIO_WIDTH = 16
   )
   
   // --------------------------------------------------------------------------
@@ -65,8 +67,8 @@ module cmsdk_iop_gpio
     input          FCLK,      // Free-running clock
     input          HCLK,      // System clock
     input          HRESETn,   // System reset
-    input  wire        i_IOSEL,     // Decode for peripheral
-    input  wire [11:0] i_IOADDR,    // I/O transfer address
+    input  signed        i_IOSEL,     // Decode for peripheral
+    input  wire [IOADDR_WIDTH-1:0] i_IOADDR,    // I/O transfer address
     input  wire        i_IOWRITE,   // I/O transfer direction
     input  wire [1:0]  i_IOSIZE,    // I/O transfer size
     input  wire        i_IOTRANS,   // I/O transaction
@@ -74,7 +76,7 @@ module cmsdk_iop_gpio
   
     input  wire [3:0]  ECOREVNUM, // Engineering-change-order revision bits
   
-    input  wire [15:0] PORTIN,    // GPIO Interface input
+    input  wire [GPIO_WIDTH-1:0] PORTIN,    // GPIO Interface input
   
     // Outputs
     output wire [31:0] o_IORDATA,   // I/0 read data bus
