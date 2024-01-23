@@ -17,4 +17,4 @@ verilog/examples/*
 
 dist
 build
-run_v.spec
+*.spec

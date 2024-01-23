@@ -36,4 +36,4 @@ run:
 	@python3 ${python_cmd}
 
 build:
-	pyinstaller run_v.py
+	pyinstaller run_v.py --onefile --clean -n vtool_inst

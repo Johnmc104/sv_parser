@@ -45,7 +45,7 @@ class ParseResult:
   def gen_inst(self):
     module_name = self.modules[0]
 
-    msg_inst = f"module inst_{module_name}(\n"
+    msg_inst = f"{module_name} inst_{module_name}(\n"
     #print(f"module inst_{module_name}(")
 
     t_ports = []
