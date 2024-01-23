@@ -115,6 +115,10 @@ class ParseResult:
         if port.startswith('w_'):
           size = int(org_port['msb']) - int(org_port['lsb']) + 1
           msg_port_dec += f"wire [{size-1}:0] {port}; \n"
+      else:
+        if port.startswith('w_'):
+          msg_port_dec += f"wire {port}; \n"
+      
       #if org_port['name']  != '': 
       #  msg_port_info += f"{org_port['name']} "
       #print(msg_port_info)

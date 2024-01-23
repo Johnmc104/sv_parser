@@ -86,7 +86,7 @@ module cmsdk_iop_gpio
     output wire [15:0] PORTFUNC,  // Alternate function control
   
     output wire [15:0] GPIOINT,   // Interrupt output for each pin
-    output wire COMBINT); // Combined interrupt
+    output wire o_COMBINT); // Combined interrupt
   
   // The GPIO width by default is 16-bit, but is coded in a way that it is
   // easy to customise the width.
