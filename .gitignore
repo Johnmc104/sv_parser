@@ -18,3 +18,7 @@ verilog/examples/*
 dist
 build
 *.spec
+
+*.docx
+
+src/__pycache__

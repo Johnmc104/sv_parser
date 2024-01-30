@@ -35,5 +35,8 @@ gen:
 run:
 	@python3 ${python_cmd}
 
+files:
+	python3 vtool.py -f filelist -top cmsdk_ahb_gpio
+
 build:
 	pyinstaller run_v.py --onefile --clean -n vtool_inst
