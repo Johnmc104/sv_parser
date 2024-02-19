@@ -56,10 +56,7 @@ class ModuleInstantiationVisitor(VerilogParserVisitor):
 
         #print("ports_connections:", ports_connections.getText())
         for child in ports_connections.getChildren():
-          if isinstance(child, antlr4.tree.Tree.TerminalNodeImpl):
-            pass
-          else:
-            self.list_of_ports_rhs.append(child.expression().getText())
+          self.list_of_ports_rhs.append(child.expression().getText())
 
 
 
@@ -120,28 +117,10 @@ def main(argv):
     with open(file,"r") as file:
       design = file.read()
 
-  #get_tree(design, parse_result)
     get_module(design, parse_result)
 
-
-
-
-  #visitor = Visitor_Module(parse_result)
-  #visitor.visit(tree)
-
-  #module_name = parse_result.modules[parse_result.top_name]['name']
-  #node = parse_result.modules[parse_result.top_name]['node']
-
-
-  #print(type(node))
-  #node = Design2Tree(node.getText())  
-  
-
-  #print("node:", node.getText())
-
-
-
   parse_result.print_modules()
+  parse_result.find_top_id()
 
   #print (parse_result.modules[parse_result.top_name]['instances'])
   #print (parse_result.modules)

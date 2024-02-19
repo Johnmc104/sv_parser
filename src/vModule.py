@@ -29,17 +29,17 @@ class Visitor_Module(VerilogParserVisitor):
     #print('type:',type(ctx))
 
     rtn = ctx.module_identifier()
+    if rtn is None: return
+    
+    module_name = rtn.getText()
+    #print('module_name:',module_name)
 
-    if rtn is not None: 
-      module_name = rtn.getText()
-      #print('module_name:',module_name)
-
-      self.results.modules[module_id] = {
-        'id': module_id,
-        'name': module_name,
-        'node': ctx,
-        'instances': {}
-      }
+    self.results.modules[module_id] = {
+      'id': module_id,
+      'name': module_name,
+      'node': ctx,
+      'instances': {}
+    }
 
 
 
@@ -60,21 +60,22 @@ def get_module(design:str, results: ParseResult):
 
   visitor = Visitor_Module(results)
   #visitor.visit(tree)
-  visitor.visitSource_text(tree)
+  ast = visitor.visitSource_text(tree)
 
   #print("module_id:", module_id)
+  #print("ast:\n",ast)
 
   node = results.modules[module_id]['node']
 
-  visitor = Visitor_ModuleInstance(module_id,results)
-  #visitor.visit(tree)
-  visitor.visitName_of_module_instance(node)
-  #visitor.visitList_of_port_connections(node)
-
-  visitor = Visitor_InstantiationContext(module_id, results)
-  #visitor.visit(tree)
-  #visitor.visitModule_instantiation(node)
-  visitor.visitModule_identifier(node)
+#  visitor = Visitor_ModuleInstance(module_id,results)
+#  #visitor.visit(tree)
+#  visitor.visitName_of_module_instance(node)
+#  #visitor.visitList_of_port_connections(node)
+#
+#  visitor = Visitor_InstantiationContext(module_id, results)
+#  #visitor.visit(tree)
+#  #visitor.visitModule_instantiation(node)
+#  visitor.visitModule_identifier(node)
 
   module_id = module_id + 1
 
