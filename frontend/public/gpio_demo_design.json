@@ -1,0 +1,366 @@
+{
+  "success": true,
+  "data": {
+    "flow_data": {
+      "nodes": [
+        {
+          "id": "gpio_demo_top",
+          "type": "moduleNode",
+          "position": { "x": 300, "y": 50 },
+          "data": {
+            "label": "gpio_demo_top",
+            "isTop": true,
+            "ports": [
+              { "name": "sys_clk", "direction": "input", "width": 1 },
+              { "name": "sys_rst_n", "direction": "input", "width": 1 },
+              { "name": "ahb_haddr", "direction": "input", "width": 32 },
+              { "name": "ahb_htrans", "direction": "input", "width": 2 },
+              { "name": "ahb_hwrite", "direction": "input", "width": 1 },
+              { "name": "ahb_hsize", "direction": "input", "width": 3 },
+              { "name": "ahb_hwdata", "direction": "input", "width": 32 },
+              { "name": "ahb_hsel", "direction": "input", "width": 1 },
+              { "name": "gpio_pins", "direction": "inout", "width": 16 },
+              { "name": "ahb_hrdata", "direction": "output", "width": 32 },
+              { "name": "ahb_hready", "direction": "output", "width": 1 },
+              { "name": "ahb_hresp", "direction": "output", "width": 1 },
+              { "name": "led_display", "direction": "output", "width": 8 },
+              { "name": "system_irq", "direction": "output", "width": 1 }
+            ],
+            "instances": [
+              "u_clk_gen (clk_generator)",
+              "u_ahb_apb_bridge (ahb_to_apb_bridge)",
+              "u_gpio_ctrl (cmsdk_iop_gpio)",
+              "u_irq_ctrl (interrupt_controller)",
+              "u_led_driver (led_driver)"
+            ]
+          },
+          "style": {
+            "border": "3px solid #FF5722",
+            "backgroundColor": "#FFF3E0",
+            "borderRadius": "8px"
+          }
+        },
+        {
+          "id": "clk_generator",
+          "type": "moduleNode",
+          "position": { "x": 50, "y": 250 },
+          "data": {
+            "label": "clk_generator",
+            "ports": [
+              { "name": "rst_n", "direction": "input", "width": 1 },
+              { "name": "clk_out", "direction": "output", "width": 1 },
+              { "name": "clk_div2", "direction": "output", "width": 1 }
+            ]
+          }
+        },
+        {
+          "id": "ahb_to_apb_bridge",
+          "type": "moduleNode",
+          "position": { "x": 300, "y": 250 },
+          "data": {
+            "label": "ahb_to_apb_bridge",
+            "ports": [
+              { "name": "hclk", "direction": "input", "width": 1 },
+              { "name": "hresetn", "direction": "input", "width": 1 },
+              { "name": "haddr", "direction": "input", "width": 32 },
+              { "name": "htrans", "direction": "input", "width": 2 },
+              { "name": "hwrite", "direction": "input", "width": 1 },
+              { "name": "hsize", "direction": "input", "width": 3 },
+              { "name": "hwdata", "direction": "input", "width": 32 },
+              { "name": "hsel", "direction": "input", "width": 1 },
+              { "name": "hrdata", "direction": "output", "width": 32 },
+              { "name": "hready", "direction": "output", "width": 1 },
+              { "name": "hresp", "direction": "output", "width": 1 },
+              { "name": "paddr", "direction": "output", "width": 32 },
+              { "name": "psel", "direction": "output", "width": 1 },
+              { "name": "penable", "direction": "output", "width": 1 },
+              { "name": "pwrite", "direction": "output", "width": 1 },
+              { "name": "pwdata", "direction": "output", "width": 32 },
+              { "name": "prdata", "direction": "input", "width": 32 },
+              { "name": "pready", "direction": "input", "width": 1 }
+            ]
+          }
+        },
+        {
+          "id": "cmsdk_iop_gpio",
+          "type": "moduleNode",
+          "position": { "x": 550, "y": 250 },
+          "data": {
+            "label": "cmsdk_iop_gpio",
+            "ports": [
+              { "name": "FCLK", "direction": "input", "width": 1 },
+              { "name": "HCLK", "direction": "input", "width": 1 },
+              { "name": "HRESETn", "direction": "input", "width": 1 },
+              { "name": "i_IOSEL", "direction": "input", "width": 1 },
+              { "name": "i_IOADDR", "direction": "input", "width": 12 },
+              { "name": "i_IOWRITE", "direction": "input", "width": 1 },
+              { "name": "i_IOSIZE", "direction": "input", "width": 2 },
+              { "name": "i_IOTRANS", "direction": "input", "width": 1 },
+              { "name": "i_IOWDATA", "direction": "input", "width": 32 },
+              { "name": "ECOREVNUM", "direction": "input", "width": 4 },
+              { "name": "PORTIN", "direction": "input", "width": 16 },
+              { "name": "o_IORDATA", "direction": "output", "width": 32 },
+              { "name": "PORTOUT", "direction": "output", "width": 16 },
+              { "name": "PORTEN", "direction": "output", "width": 16 },
+              { "name": "PORTFUNC", "direction": "output", "width": 16 },
+              { "name": "GPIOINT", "direction": "output", "width": 16 },
+              { "name": "o_COMBINT", "direction": "output", "width": 1 }
+            ]
+          }
+        },
+        {
+          "id": "interrupt_controller",
+          "type": "moduleNode",
+          "position": { "x": 800, "y": 250 },
+          "data": {
+            "label": "interrupt_controller",
+            "ports": [
+              { "name": "clk", "direction": "input", "width": 1 },
+              { "name": "rst_n", "direction": "input", "width": 1 },
+              { "name": "irq_in", "direction": "input", "width": 16 },
+              { "name": "irq_out", "direction": "output", "width": 1 },
+              { "name": "irq_ack", "direction": "output", "width": 1 }
+            ]
+          }
+        },
+        {
+          "id": "led_driver",
+          "type": "moduleNode",
+          "position": { "x": 1050, "y": 250 },
+          "data": {
+            "label": "led_driver",
+            "ports": [
+              { "name": "clk", "direction": "input", "width": 1 },
+              { "name": "rst_n", "direction": "input", "width": 1 },
+              { "name": "gpio_data", "direction": "input", "width": 8 },
+              { "name": "enable", "direction": "input", "width": 1 },
+              { "name": "led_out", "direction": "output", "width": 8 }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "gpio_demo_top",
+          "target": "clk_generator",
+          "sourceHandle": "sys_rst_n",
+          "targetHandle": "rst_n",
+          "label": "sys_rst_n → rst_n",
+          "style": { "stroke": "#4CAF50", "strokeWidth": 2 }
+        },
+        {
+          "id": "e2",
+          "source": "clk_generator",
+          "target": "ahb_to_apb_bridge",
+          "sourceHandle": "clk_out",
+          "targetHandle": "hclk",
+          "label": "clk_out → hclk",
+          "style": { "stroke": "#2196F3", "strokeWidth": 2 }
+        },
+        {
+          "id": "e3",
+          "source": "ahb_to_apb_bridge",
+          "target": "cmsdk_iop_gpio",
+          "sourceHandle": "psel",
+          "targetHandle": "i_IOSEL",
+          "label": "psel → i_IOSEL",
+          "style": { "stroke": "#FF9800", "strokeWidth": 2 }
+        },
+        {
+          "id": "e4",
+          "source": "cmsdk_iop_gpio",
+          "target": "interrupt_controller",
+          "sourceHandle": "GPIOINT",
+          "targetHandle": "irq_in",
+          "label": "GPIOINT → irq_in",
+          "style": { "stroke": "#9C27B0", "strokeWidth": 2 }
+        },
+        {
+          "id": "e5",
+          "source": "cmsdk_iop_gpio",
+          "target": "led_driver",
+          "sourceHandle": "PORTOUT",
+          "targetHandle": "gpio_data",
+          "label": "PORTOUT[7:0] → gpio_data",
+          "style": { "stroke": "#E91E63", "strokeWidth": 2 }
+        }
+      ]
+    },
+    "design_info": {
+      "modules": {
+        "gpio_demo_top": {
+          "ports": [
+            { "name": "sys_clk", "direction": "input", "width": 1 },
+            { "name": "sys_rst_n", "direction": "input", "width": 1 },
+            { "name": "ahb_haddr", "direction": "input", "width": 32 },
+            { "name": "ahb_htrans", "direction": "input", "width": 2 },
+            { "name": "ahb_hwrite", "direction": "input", "width": 1 },
+            { "name": "ahb_hsize", "direction": "input", "width": 3 },
+            { "name": "ahb_hwdata", "direction": "input", "width": 32 },
+            { "name": "ahb_hsel", "direction": "input", "width": 1 },
+            { "name": "gpio_pins", "direction": "inout", "width": 16 },
+            { "name": "ahb_hrdata", "direction": "output", "width": 32 },
+            { "name": "ahb_hready", "direction": "output", "width": 1 },
+            { "name": "ahb_hresp", "direction": "output", "width": 1 },
+            { "name": "led_display", "direction": "output", "width": 8 },
+            { "name": "system_irq", "direction": "output", "width": 1 }
+          ],
+          "instances": [
+            { "name": "u_clk_gen", "module_type": "clk_generator" },
+            { "name": "u_ahb_apb_bridge", "module_type": "ahb_to_apb_bridge" },
+            { "name": "u_gpio_ctrl", "module_type": "cmsdk_iop_gpio" },
+            { "name": "u_irq_ctrl", "module_type": "interrupt_controller" },
+            { "name": "u_led_driver", "module_type": "led_driver" }
+          ],
+          "parameters": [
+            { "name": "AHB_ADDR_WIDTH", "value": "32" },
+            { "name": "GPIO_WIDTH", "value": "16" }
+          ]
+        },
+        "clk_generator": {
+          "ports": [
+            { "name": "rst_n", "direction": "input", "width": 1 },
+            { "name": "clk_out", "direction": "output", "width": 1 },
+            { "name": "clk_div2", "direction": "output", "width": 1 }
+          ],
+          "parameters": [
+            { "name": "FREQ_HZ", "value": "100000000" }
+          ]
+        },
+        "ahb_to_apb_bridge": {
+          "ports": [
+            { "name": "hclk", "direction": "input", "width": 1 },
+            { "name": "hresetn", "direction": "input", "width": 1 },
+            { "name": "haddr", "direction": "input", "width": 32 },
+            { "name": "htrans", "direction": "input", "width": 2 },
+            { "name": "hwrite", "direction": "input", "width": 1 },
+            { "name": "hsize", "direction": "input", "width": 3 },
+            { "name": "hwdata", "direction": "input", "width": 32 },
+            { "name": "hsel", "direction": "input", "width": 1 },
+            { "name": "hrdata", "direction": "output", "width": 32 },
+            { "name": "hready", "direction": "output", "width": 1 },
+            { "name": "hresp", "direction": "output", "width": 1 },
+            { "name": "paddr", "direction": "output", "width": 32 },
+            { "name": "psel", "direction": "output", "width": 1 },
+            { "name": "penable", "direction": "output", "width": 1 },
+            { "name": "pwrite", "direction": "output", "width": 1 },
+            { "name": "pwdata", "direction": "output", "width": 32 },
+            { "name": "prdata", "direction": "input", "width": 32 },
+            { "name": "pready", "direction": "input", "width": 1 }
+          ]
+        },
+        "cmsdk_iop_gpio": {
+          "ports": [
+            { "name": "FCLK", "direction": "input", "width": 1 },
+            { "name": "HCLK", "direction": "input", "width": 1 },
+            { "name": "HRESETn", "direction": "input", "width": 1 },
+            { "name": "i_IOSEL", "direction": "input", "width": 1 },
+            { "name": "i_IOADDR", "direction": "input", "width": 12 },
+            { "name": "i_IOWRITE", "direction": "input", "width": 1 },
+            { "name": "i_IOSIZE", "direction": "input", "width": 2 },
+            { "name": "i_IOTRANS", "direction": "input", "width": 1 },
+            { "name": "i_IOWDATA", "direction": "input", "width": 32 },
+            { "name": "ECOREVNUM", "direction": "input", "width": 4 },
+            { "name": "PORTIN", "direction": "input", "width": 16 },
+            { "name": "o_IORDATA", "direction": "output", "width": 32 },
+            { "name": "PORTOUT", "direction": "output", "width": 16 },
+            { "name": "PORTEN", "direction": "output", "width": 16 },
+            { "name": "PORTFUNC", "direction": "output", "width": 16 },
+            { "name": "GPIOINT", "direction": "output", "width": 16 },
+            { "name": "o_COMBINT", "direction": "output", "width": 1 }
+          ],
+          "parameters": [
+            { "name": "GPIO_WIDTH", "value": "16" },
+            { "name": "IOADDR_WIDTH", "value": "12" }
+          ]
+        },
+        "interrupt_controller": {
+          "ports": [
+            { "name": "clk", "direction": "input", "width": 1 },
+            { "name": "rst_n", "direction": "input", "width": 1 },
+            { "name": "irq_in", "direction": "input", "width": 16 },
+            { "name": "irq_out", "direction": "output", "width": 1 },
+            { "name": "irq_ack", "direction": "output", "width": 1 }
+          ],
+          "parameters": [
+            { "name": "IRQ_WIDTH", "value": "16" }
+          ]
+        },
+        "led_driver": {
+          "ports": [
+            { "name": "clk", "direction": "input", "width": 1 },
+            { "name": "rst_n", "direction": "input", "width": 1 },
+            { "name": "gpio_data", "direction": "input", "width": 8 },
+            { "name": "enable", "direction": "input", "width": 1 },
+            { "name": "led_out", "direction": "output", "width": 8 }
+          ],
+          "parameters": [
+            { "name": "BLINK_RATE", "value": "1000" }
+          ]
+        }
+      }
+    },
+    "hierarchy": {
+      "name": "gpio_demo_top",
+      "children": [
+        {
+          "name": "clk_generator",
+          "instance_name": "u_clk_gen",
+          "children": [],
+          "instance_count": 1
+        },
+        {
+          "name": "ahb_to_apb_bridge",
+          "instance_name": "u_ahb_apb_bridge",
+          "children": [],
+          "instance_count": 1
+        },
+        {
+          "name": "cmsdk_iop_gpio",
+          "instance_name": "u_gpio_ctrl",
+          "children": [],
+          "instance_count": 1
+        },
+        {
+          "name": "interrupt_controller",
+          "instance_name": "u_irq_ctrl",
+          "children": [],
+          "instance_count": 1
+        },
+        {
+          "name": "led_driver",
+          "instance_name": "u_led_driver",
+          "children": [],
+          "instance_count": 1
+        }
+      ],
+      "instance_count": 5
+    },
+    "stats": {
+      "modules": {
+        "total": 6,
+        "top_module": "gpio_demo_top"
+      },
+      "instances": {
+        "total": 5
+      },
+      "ports": {
+        "total": 63
+      },
+      "hierarchy": {
+        "max_depth": 2
+      }
+    },
+    "validation": {
+      "error_count": 0,
+      "warning_count": 2,
+      "errors": [],
+      "warnings": [
+        "Unused port 'clk_div2' in module clk_generator",
+        "Parameter BLINK_RATE might cause timing issues"
+      ]
+    }
+  },
+  "stdout": "Demo GPIO design loaded successfully. Contains 6 modules with AHB-APB bridge, GPIO controller, interrupt controller, and LED driver."
+}
