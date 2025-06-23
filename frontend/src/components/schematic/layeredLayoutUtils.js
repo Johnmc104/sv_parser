@@ -77,8 +77,8 @@ const categorizeConnections = (instancePorts) => {
 };
 
 const calculateLayeredPositions = (layers, moduleInfo, designData, connectionPatterns) => {
-  const layerSpacing = 400; // 层间垂直距离
-  const baseModuleSpacing = 300; // 基础模块间距离
+  const layerSpacing = 400;
+  const baseModuleSpacing = 300;
   const startX = 150;
   const startY = 100;
   
@@ -99,25 +99,20 @@ const calculateLayeredPositions = (layers, moduleInfo, designData, connectionPat
     });
   });
   
-  // 优化层内排列以减少连线长度和交叉
+  // 初始分层布局
   const optimizedLayers = optimizeForDirectConnections(layers, connectionPatterns, moduleSizes);
   
-  // 计算最终位置
+  // 计算初始位置
   optimizedLayers.forEach((layer, layerIndex) => {
     const layerY = startY + layerIndex * layerSpacing;
-    
-    // 动态调整模块间距以适应连接密度
     const moduleSpacing = calculateDynamicSpacing(layer, connectionPatterns, moduleSizes, baseModuleSpacing);
     
-    // 计算层的总宽度用于居中
     const totalWidth = layer.reduce((sum, instanceName, index) => {
       const size = moduleSizes.get(instanceName) || { width: 200 };
       return sum + size.width + (index > 0 ? moduleSpacing : 0);
     }, 0);
     
-    // 居中对齐
     const layerStartX = startX + Math.max(0, (1400 - totalWidth) / 2);
-    
     let currentX = layerStartX;
     
     layer.forEach((instanceName) => {
@@ -142,6 +137,10 @@ const calculateLayeredPositions = (layers, moduleInfo, designData, connectionPat
       }
     });
   });
+  
+  // 如果需要进一步优化，可以在这里应用力导向算法
+  // const connections = moduleInfo.internal_structure.port_connections || [];
+  // const finalPositions = applyForceDirectedOptimization(positions, connections, optimizedLayers);
   
   return { positions, layers: optimizedLayers, totalLayers: optimizedLayers.length };
 };
@@ -236,16 +235,5 @@ const calculateDynamicSpacing = (layer, connectionPatterns, moduleSizes, baseSpa
     }
   });
   
-  // 根据连接密度调整间距
-  const avgConnections = totalConnections / layer.length;
-  const spacingMultiplier = Math.max(0.8, Math.min(1.5, 1 + avgConnections * 0.1));
-  
-  return Math.round(baseSpacing * spacingMultiplier);
-};
-
-// 优化层内排列：减少连线交叉
-export const optimizeLayerArrangement = (positions, connections, layers) => {
-  // 保持位置不变，只返回原始位置
-  // 主要优化已经在 optimizeForDirectConnections 中完成
-  return positions;
+  return baseSpacing;
 };

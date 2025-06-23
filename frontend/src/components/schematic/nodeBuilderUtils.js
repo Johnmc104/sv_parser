@@ -3,7 +3,7 @@
  */
 
 import { calculateModuleSize, calculatePortPositions } from './moduleLayoutUtils';
-import { generateLayeredLayout, optimizeLayerArrangement } from './layeredLayoutUtils';
+import { generateLayeredLayout } from './layeredLayoutUtils';
 
 // 从原理图数据构建节点
 export const buildNodesFromSchematicData = (schematicView, designData, onNavigate) => {
@@ -54,13 +54,10 @@ export const buildNodesFromModuleDefinition = (moduleInfo, designData, onNavigat
 
 const buildLayeredNodes = (moduleInfo, designData, onNavigate) => {
   const { positions, layers } = generateLayeredLayout(moduleInfo, designData);
-  const connections = moduleInfo.internal_structure.port_connections || [];
-  
-  // 应用连线优化
-  const optimizedPositions = optimizeLayerArrangement(positions, connections, layers);
   const nodes = [];
   
-  optimizedPositions.forEach((posData, instanceName) => {
+  // 直接使用从 generateLayeredLayout 返回的优化后位置
+  positions.forEach((posData, instanceName) => {
     const instance = moduleInfo.internal_structure.instances.find(i => i.name === instanceName);
     if (!instance) return;
     
