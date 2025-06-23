@@ -1,0 +1,96 @@
+/* 模块符号样式 - 简化版本，移除颜色差异 */
+.module-symbol {
+  font-family: Arial, sans-serif;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.module-symbol:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.symbol-header {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+  flex-shrink: 0;
+}
+
+.instance-name {
+  font-weight: bold;
+  font-size: 11px;
+  color: #333;
+  margin-bottom: 2px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.module-type {
+  font-size: 9px;
+  color: #666;
+  font-style: italic;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ports-area {
+  position: relative;
+  flex: 1;
+}
+
+.symbol-content {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #999;
+  text-align: center;
+}
+
+.port-count {
+  background: rgba(255,255,255,0.8);
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.port-label {
+  color: #333;
+  font-weight: 500;
+  line-height: 1;
+  text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bus-indicator {
+  color: #FF9800;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+/* ReactFlow Handle 自定义 */
+.react-flow__handle {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  border: 2px solid #333 !important;
+}
+
+.react-flow__handle-connecting {
+  background: #2196F3 !important;
+  border-color: #2196F3 !important;
+}
+
+.react-flow__handle-valid {
+  background: #4CAF50 !important;
+  border-color: #4CAF50 !important;
+}

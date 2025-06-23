@@ -1,0 +1,85 @@
+/* 信号线样式 */
+.signal-wire {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signal-wire:hover {
+  filter: brightness(1.2);
+}
+
+.signal-wire.selected {
+  filter: drop-shadow(0 0 6px rgba(33, 150, 243, 0.6));
+}
+
+/* 信号类型样式 */
+.signal-clock {
+  stroke: #2196F3;
+  stroke-dasharray: 5,5;
+}
+
+.signal-reset {
+  stroke: #f44336;
+  stroke-width: 2;
+}
+
+.signal-data {
+  stroke: #4CAF50;
+  stroke-width: 2;
+}
+
+.signal-bus {
+  stroke: #FF9800;
+  stroke-width: 3;
+}
+
+.signal-interrupt {
+  stroke: #9C27B0;
+  stroke-width: 2;
+}
+
+.signal-control {
+  stroke: #607D8B;
+  stroke-width: 2;
+}
+
+/* 总线标记样式 */
+.bus-indicator-line {
+  stroke-width: 2;
+  fill: none;
+}
+
+.bus-width-label {
+  font-family: monospace;
+  font-size: 10px;
+  fill: currentColor;
+  text-anchor: middle;
+}
+
+/* 信号名称标签样式 */
+.signal-name-label {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  text-anchor: middle;
+  filter: drop-shadow(1px 1px 1px rgba(255,255,255,0.8));
+  pointer-events: none;
+}
+
+.signal-name-label.selected {
+  font-weight: bold;
+}
+
+/* 高亮效果 */
+.signal-highlight {
+  stroke: rgba(33, 150, 243, 0.3);
+  stroke-width: 8;
+  fill: none;
+  pointer-events: none;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+  100% { opacity: 0.3; }
+}

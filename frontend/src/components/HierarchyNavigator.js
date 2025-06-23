@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/HierarchyNavigator.css';
 
 function HierarchyNavigator({ designData, currentView, onNavigate }) {
   const [expandedNodes, setExpandedNodes] = useState(new Set());
@@ -31,13 +32,18 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
         });
       }
 
+      // 判断是否有原理图：如果模块本身存在于module_library中，就认为有原理图
+      const hasSchematic = !!moduleInfo;
+
       return {
         name: instanceName || moduleName,
         module_type: moduleName,
         display_name: instanceName ? `${instanceName} (${moduleName})` : moduleName,
         children,
         is_top: moduleName === topModule,
-        has_schematic: data.schematic_views.hasOwnProperty(moduleName)
+        has_schematic: hasSchematic, // 修改判断逻辑
+        instance_count: moduleInfo.internal_structure?.instances?.length || 0,
+        port_count: moduleInfo.ports?.length || 0
       };
     };
 
@@ -55,6 +61,7 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
   };
 
   const handleNodeClick = (node) => {
+    console.log('Hierarchy node clicked:', node);
     if (node.has_schematic) {
       onNavigate(node.module_type);
     }
@@ -93,9 +100,11 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
           
           <span className="node-name">{node.display_name}</span>
           
-          {!node.has_schematic && (
-            <span className="no-schematic-badge">No Schematic</span>
-          )}
+          <span className="node-info">
+            {node.instance_count > 0 && (
+              <span className="instance-badge">{node.instance_count}</span>
+            )}
+          </span>
         </div>
         
         {isExpanded && hasChildren && (
@@ -113,7 +122,7 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
     const moduleInfo = designData.module_library[currentView];
     if (!moduleInfo) return null;
 
-    const netlist = designData.signal_netlist.nets;
+    const netlist = designData.signal_netlist?.nets || {};
     const relatedNets = Object.values(netlist).filter(net => 
       net.driver?.module === currentView || 
       net.loads?.some(load => load.module === currentView)
@@ -130,7 +139,7 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
   return (
     <div className="hierarchy-navigator">
       <div className="navigator-section">
-        <h3>Design Hierarchy</h3>
+        <h3>📊 Design Hierarchy</h3>
         <div className="hierarchy-tree">
           {hierarchyTree ? renderNode(hierarchyTree) : (
             <div className="loading">Building hierarchy...</div>
@@ -140,7 +149,7 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
 
       {moduleInfo && (
         <div className="navigator-section">
-          <h3>Module Details</h3>
+          <h3>📋 Module Details</h3>
           <div className="module-info">
             <div className="info-item">
               <label>Module:</label>
@@ -166,16 +175,18 @@ function HierarchyNavigator({ designData, currentView, onNavigate }) {
 
           <div className="ports-list">
             <h4>Ports</h4>
-            {moduleInfo.ports?.map((port, index) => (
-              <div key={index} className={`port-item ${port.direction}`}>
-                <span className="port-direction">{port.direction}</span>
-                <span className="port-name">{port.name}</span>
-                {port.width > 1 && (
-                  <span className="port-width">[{port.width-1}:0]</span>
-                )}
-                <span className="port-type">{port.type}</span>
-              </div>
-            ))}
+            <div className="ports-container">
+              {moduleInfo.ports?.map((port, index) => (
+                <div key={index} className={`port-item ${port.direction}`}>
+                  <span className="port-direction">{port.direction}</span>
+                  <span className="port-name">{port.name}</span>
+                  {port.width > 1 && (
+                    <span className="port-width">[{port.width-1}:0]</span>
+                  )}
+                  <span className="port-type">{port.type}</span>
+                </div>
+              )) || <div className="no-ports">No ports defined</div>}
+            </div>
           </div>
         </div>
       )}
