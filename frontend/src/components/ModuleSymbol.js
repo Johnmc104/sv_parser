@@ -1,9 +1,10 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import '../styles/ModuleSymbol.css';
 
 const ModuleSymbol = memo(({ data, selected, id }) => {
-  // 添加安全检查
+  const nodeRef = useRef(null);
+
   if (!data) {
     console.error('ModuleSymbol: data is undefined');
     return <div>Error: No data</div>;
@@ -20,11 +21,19 @@ const ModuleSymbol = memo(({ data, selected, id }) => {
     onDoubleClick 
   } = data;
 
-  // 添加更多安全检查
   if (!size) {
     console.error('ModuleSymbol: size is undefined');
     return <div>Error: No size data</div>;
   }
+
+  // 强制DOM更新尺寸
+  useEffect(() => {
+    if (nodeRef.current && size) {
+      nodeRef.current.style.width = `${size.width}px`;
+      nodeRef.current.style.height = `${size.height}px`;
+      console.log(`Forcing size update for ${instanceName}: ${size.width}x${size.height}`);
+    }
+  }, [size, instanceName]);
 
   const getHandlePosition = (side) => {
     switch (side) {
@@ -36,36 +45,92 @@ const ModuleSymbol = memo(({ data, selected, id }) => {
     }
   };
 
-  // 计算端口在边缘的精确位置
+  // 计算端口在边缘的精确位置和标签位置
   const getHandleStyle = (portName, portInfo) => {
-    const baseSize = 10; // 减小handle尺寸
+    const baseSize = 8;
     const handleStyle = {
       width: `${baseSize}px`,
       height: `${baseSize}px`,
       border: `2px solid #333`,
       borderRadius: portInfo.bus ? '2px' : '50%',
       backgroundColor: portInfo.bus ? '#FF9800' : '#fff',
+      zIndex: 10,
     };
 
-    // 根据端口位置设置具体坐标
     const offset = portInfo.offset || 0;
     
     switch (portInfo.side) {
       case 'left':
         handleStyle.left = `-${baseSize/2}px`;
         handleStyle.top = `${offset}px`;
+        handleStyle.transform = 'translateY(-50%)';
         break;
       case 'right':
         handleStyle.right = `-${baseSize/2}px`;
         handleStyle.top = `${offset}px`;
+        handleStyle.transform = 'translateY(-50%)';
         break;
       case 'bottom':
         handleStyle.bottom = `-${baseSize/2}px`;
         handleStyle.left = `${offset}px`;
+        handleStyle.transform = 'translateX(-50%)';
         break;
     }
 
     return handleStyle;
+  };
+
+  // 计算端口标签位置 - 确保在矩形内部，使用与SchematicViewer一致的边距
+  const getPortLabelStyle = (portName, portInfo) => {
+    const offset = portInfo.offset || 0;
+    let labelStyle = {
+      position: 'absolute',
+      fontSize: '9px',
+      fontFamily: 'monospace',
+      whiteSpace: 'nowrap',
+      color: '#333',
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      padding: '1px 4px',
+      borderRadius: '2px',
+      border: '1px solid #ccc',
+      zIndex: 15,
+      fontWeight: '500',
+      maxWidth: '80px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    };
+
+    switch (portInfo.side) {
+      case 'left':
+        labelStyle = {
+          ...labelStyle,
+          left: '8px', // 在矩形内部
+          top: `${offset}px`,
+          transform: 'translateY(-50%)',
+          textAlign: 'left'
+        };
+        break;
+      case 'right':
+        labelStyle = {
+          ...labelStyle,
+          right: '8px', // 在矩形内部
+          top: `${offset}px`,
+          transform: 'translateY(-50%)',
+          textAlign: 'right'
+        };
+        break;
+      case 'bottom':
+        labelStyle = {
+          ...labelStyle,
+          bottom: '25px', // 与SchematicViewer中的bottomMargin一致
+          left: `${offset}px`,
+          transform: 'translateX(-50%)',
+          textAlign: 'center'
+        };
+        break;
+    }
+
+    return labelStyle;
   };
 
   const symbolStyle = {
@@ -78,12 +143,23 @@ const ModuleSymbol = memo(({ data, selected, id }) => {
     position: 'relative',
     cursor: 'pointer',
     overflow: 'visible',
+    zIndex: 1,
+    // 强制尺寸
+    minWidth: `${size.width}px`,
+    minHeight: `${size.height}px`,
+    maxWidth: `${size.width}px`,
+    maxHeight: `${size.height}px`,
   };
 
-  console.log(`Rendering ${instanceName} with ports:`, portPositions);
+  // Debug信息：显示计算出的尺寸
+  console.log(`Module ${instanceName}: calculated size = ${size.width}x${size.height}`);
+  if (portPositions) {
+    console.log(`Port positions for ${instanceName}:`, portPositions);
+  }
 
   return (
     <div 
+      ref={nodeRef}
       className="module-symbol"
       style={symbolStyle}
       onDoubleClick={onDoubleClick}
@@ -95,59 +171,33 @@ const ModuleSymbol = memo(({ data, selected, id }) => {
       </div>
 
       {/* 端口区域 */}
-      <div className="ports-area">
+      <div className="ports-area" style={{ position: 'relative', flex: 1 }}>
         {portPositions && Object.entries(portPositions).map(([portName, portInfo]) => {
           const handleStyle = getHandleStyle(portName, portInfo);
+          const labelStyle = getPortLabelStyle(portName, portInfo);
           
-          // 根据端口方向确定Handle类型
           const handleType = portInfo.side === 'left' ? 'target' : 
                            portInfo.side === 'right' ? 'source' : 
-                           'source'; // 双向端口默认为source
+                           'source';
 
           return (
-            <Handle
-              key={portName}
-              type={handleType}
-              position={getHandlePosition(portInfo.side)}
-              id={portName}
-              style={handleStyle}
-            >
-              {/* 端口标签 */}
+            <div key={portName}>
+              <Handle
+                type={handleType}
+                position={getHandlePosition(portInfo.side)}
+                id={portName}
+                style={handleStyle}
+              />
+              
+              {/* 端口标签 - 现在在矩形内部 */}
               <div 
                 className={`port-label port-${portInfo.side}`}
-                style={{
-                  position: 'absolute',
-                  fontSize: '9px',
-                  fontFamily: 'monospace',
-                  whiteSpace: 'nowrap',
-                  color: '#333',
-                  backgroundColor: 'rgba(255,255,255,0.95)',
-                  padding: '1px 3px',
-                  borderRadius: '2px',
-                  border: '1px solid #ccc',
-                  zIndex: 1000,
-                  fontWeight: '500',
-                  ...(portInfo.side === 'left' && { 
-                    right: '12px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)' 
-                  }),
-                  ...(portInfo.side === 'right' && { 
-                    left: '12px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)' 
-                  }),
-                  ...(portInfo.side === 'bottom' && { 
-                    bottom: '12px', 
-                    left: '50%', 
-                    transform: 'translateX(-50%)' 
-                  }),
-                }}
+                style={labelStyle}
               >
                 {portName}
                 {portInfo.bus && <span className="bus-indicator">[]</span>}
               </div>
-            </Handle>
+            </div>
           );
         })}
       </div>
