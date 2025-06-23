@@ -6,7 +6,6 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   Panel,
-  ConnectionLineType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -31,17 +30,16 @@ import {
 } from './schematic/uiComponentUtils';
 import { 
   createEdgeClickHandler, 
-  createPanelCloseHandler, 
-  createNodeStateUpdater 
+  createPanelCloseHandler 
 } from './schematic/eventHandlerUtils';
 
 function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, onNavigate }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [schematicData, setSchematicData] = useState(null);
   const [selectedEdgeInfo, setSelectedEdgeInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 事件处理器
+  // 优化：缓存事件处理器
   const handleEdgeClick = useCallback(
     createEdgeClickHandler(setSelectedEdgeInfo, onNetSelect), 
     [onNetSelect]
@@ -52,18 +50,35 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
     []
   );
 
-  const nodeStateUpdater = useMemo(
-    () => createNodeStateUpdater(setNodes, setEdges),
-    [setNodes, setEdges]
-  );
-
+  // 优化：将构建逻辑提取为独立的effect
   useEffect(() => {
-    if (designData && currentModule) {
-      buildSchematicView();
+    if (!designData || !currentModule) {
+      setNodes([]);
+      setEdges([]);
+      return;
     }
+
+    setIsLoading(true);
+    buildSchematicView();
+    setIsLoading(false);
   }, [designData, currentModule]);
 
-  const buildSchematicView = () => {
+  // 优化：将网络选择更新逻辑分离
+  useEffect(() => {
+    if (selectedNet && edges.length > 0) {
+      const updatedEdges = edges.map(edge => ({
+        ...edge,
+        data: { ...edge.data, isSelected: edge.data.netId === selectedNet },
+        style: {
+          ...edge.style,
+          strokeWidth: edge.data.netId === selectedNet ? 4 : 2,
+        }
+      }));
+      setEdges(updatedEdges);
+    }
+  }, [selectedNet]);
+
+  const buildSchematicView = useCallback(() => {
     const schematicView = designData.schematic_views?.[currentModule];
     const moduleInfo = designData.module_library?.[currentModule];
     
@@ -74,51 +89,51 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
       return;
     }
 
-    if (schematicView && schematicView.symbols && schematicView.symbols.length > 0) {
+    if (schematicView?.symbols?.length > 0) {
       buildFromSchematicData(schematicView, moduleInfo);
     } else {
       buildFromModuleDefinition(moduleInfo);
     }
-  };
+  }, [designData, currentModule]);
 
-  const buildFromSchematicData = (schematicView, moduleInfo) => {
-    console.log('Building from schematic data');
-    setSchematicData(schematicView);
-
+  const buildFromSchematicData = useCallback((schematicView, moduleInfo) => {
     const reactFlowNodes = buildNodesFromSchematicData(schematicView, designData, onNavigate);
     const reactFlowEdges = buildEdgesFromSchematicData(schematicView, designData, selectedNet);
     
     setNodes(reactFlowNodes);
     setEdges(reactFlowEdges);
-  };
+  }, [designData, onNavigate, selectedNet]);
 
-  const buildFromModuleDefinition = (moduleInfo) => {
-    console.log('Building from module definition:', moduleInfo);
-
+  const buildFromModuleDefinition = useCallback((moduleInfo) => {
     const defaultNodes = buildNodesFromModuleDefinition(moduleInfo, designData, onNavigate);
-
-    nodeStateUpdater.clearNodes();
-    nodeStateUpdater.updateNodes(defaultNodes);
+    setNodes(defaultNodes);
 
     if (moduleInfo.internal_structure?.port_connections) {
-      const newEdges = createSmartRoutes(defaultNodes, moduleInfo.internal_structure.port_connections, selectedNet);
-      nodeStateUpdater.updateEdges(newEdges);
+      // 优化：使用Promise处理异步更新
+      Promise.resolve().then(() => {
+        const newEdges = createSmartRoutes(defaultNodes, moduleInfo.internal_structure.port_connections, selectedNet);
+        setEdges(newEdges);
+      });
     } else {
-      nodeStateUpdater.clearEdges();
+      setEdges([]);
     }
-  };
+  }, [designData, onNavigate, selectedNet]);
 
+  // 优化：缓存处理后的边数据
   const edgesWithClickHandler = useMemo(() => {
     return processEdgeClickData(edges, handleEdgeClick);
   }, [edges, handleEdgeClick]);
 
   const nodeTypes = useMemo(() => createNodeTypes(ModuleSymbol), []);
-  const reactFlowConfig = getReactFlowConfig();
-  const containerStyle = getViewerContainerStyle();
+  const reactFlowConfig = useMemo(() => getReactFlowConfig(), []);
+
+  if (isLoading) {
+    return <div className="schematic-loading">Loading schematic...</div>;
+  }
 
   return (
     <div className="schematic-viewer">
-      <div className="viewer-content" style={containerStyle}>
+      <div className="viewer-content" style={getViewerContainerStyle()}>
         <ReactFlow
           nodes={nodes}
           edges={edgesWithClickHandler}

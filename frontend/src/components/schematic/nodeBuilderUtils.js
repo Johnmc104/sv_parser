@@ -2,7 +2,7 @@
  * 节点构建工具 - 从 SchematicViewer.js 拆分
  */
 
-import { calculateModuleSize, createPortPositions } from './moduleLayoutUtils';
+import { calculateModuleSize, calculatePortPositions } from './moduleLayoutUtils';
 
 // 从原理图数据构建节点
 export const buildNodesFromSchematicData = (schematicView, designData, onNavigate) => {
@@ -56,7 +56,7 @@ export const buildNodesFromModuleDefinition = (moduleInfo, designData, onNavigat
       }
 
       const moduleSize = calculateModuleSize(subModuleInfo.ports || []);
-      const portPositions = createPortPositions(subModuleInfo.ports || [], moduleSize);
+      const portPositions = calculatePortPositions(subModuleInfo.ports || [], moduleSize);
 
       // Debug输出
       console.log(`Instance ${instance.name}:`, {

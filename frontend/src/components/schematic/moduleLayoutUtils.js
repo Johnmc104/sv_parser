@@ -2,183 +2,189 @@
  * 模块布局和尺寸计算工具 - 从原始SchematicViewer.js拆分
  */
 
-// 计算模块的动态尺寸 - 修正计算逻辑
+// 优化：缓存计算结果
+const sizeCache = new Map();
+
 export const calculateModuleSize = (ports) => {
+  const cacheKey = JSON.stringify(ports.map(p => ({ name: p.name, direction: p.direction })));
+  
+  if (sizeCache.has(cacheKey)) {
+    return sizeCache.get(cacheKey);
+  }
+
   const inputs = ports.filter(p => p.direction === 'input');
   const outputs = ports.filter(p => p.direction === 'output');
   const inouts = ports.filter(p => p.direction === 'inout');
 
-  const portSpacing = 25; // 增加端口间距
+  const portSpacing = 30; // 增加端口间距
   const headerHeight = 40;
-  const topMargin = 10; // 头部下方的间距
-  const bottomMargin = 100; // 底部预留空间
+  const topMargin = 10;
+  const bottomMargin = 50;
   const sideMargin = 15;
   const minWidth = 180;
   const minHeight = 100;
 
-  // 计算实际需要的高度：基于左右两侧端口的最大数量
   const maxSidePorts = Math.max(inputs.length, outputs.length);
   
-  // 计算侧边端口所需的实际高度
   let sidePortsHeight = 0;
   if (maxSidePorts > 0) {
-    // 第一个端口在topMargin位置，最后一个端口要预留bottomMargin
-    // 端口之间的间距为portSpacing
     sidePortsHeight = topMargin + (maxSidePorts - 1) * portSpacing + bottomMargin;
   } else {
     sidePortsHeight = topMargin + bottomMargin;
   }
   
-  // 如果有inout端口，需要额外的底部空间
   const bottomPortsHeight = inouts.length > 0 ? 40 : 0;
+  const calculatedHeight = Math.max(minHeight, headerHeight + sidePortsHeight + bottomPortsHeight);
 
-  // 计算总高度
-  const calculatedHeight = Math.max(
-    minHeight,
-    headerHeight + sidePortsHeight + bottomPortsHeight
-  );
+  const maxPortNameLength = Math.max(...ports.map(p => p.name.length), 8);
+  const estimatedTextWidth = maxPortNameLength * 9;
+  const labelPadding = 80;
+  const bottomPortsWidth = inouts.length > 0 ? Math.max(inouts.length * 80, 200) : 0;
+  const calculatedWidth = Math.max(minWidth, estimatedTextWidth + labelPadding, bottomPortsWidth + 2 * sideMargin);
 
-  // 计算宽度：基于端口名称长度和底部端口数量
-  const maxPortNameLength = Math.max(
-    ...ports.map(p => p.name.length),
-    8 // 最小长度
-  );
-  
-  // 估算文本宽度 + 端口标签空间
-  const estimatedTextWidth = maxPortNameLength * 9; // 每字符约9px
-  const labelPadding = 80; // 左右标签的padding空间
-  
-  // 底部端口所需宽度
-  const bottomPortsWidth = inouts.length > 0 ? 
-    Math.max(inouts.length * 80, 200) : 0; // 每个底部端口至少80px宽
-
-  const calculatedWidth = Math.max(
-    minWidth,
-    estimatedTextWidth + labelPadding,
-    bottomPortsWidth + 2 * sideMargin
-  );
-
-  // Debug输出
-  console.log(`Module size calculation:`, {
-    ports: ports.length,
-    inputs: inputs.length,
-    outputs: outputs.length,
-    inouts: inouts.length,
-    maxSidePorts,
-    sidePortsHeight,
-    calculatedHeight,
-    calculatedWidth
-  });
-
-  return {
+  const result = {
     width: Math.round(calculatedWidth),
     height: Math.round(calculatedHeight)
   };
+  
+  // 缓存结果
+  sizeCache.set(cacheKey, result);
+  
+  return result;
 };
 
-export const createPortPositions = (ports, moduleSize) => {
+// 优化：位置计算函数 - 修复端口位置堆积问题
+export const calculatePortPositions = (ports, moduleSize) => {
   const positions = {};
   const inputs = ports.filter(p => p.direction === 'input');
   const outputs = ports.filter(p => p.direction === 'output');
   const inouts = ports.filter(p => p.direction === 'inout');
-
-  const { width: symbolWidth, height: symbolHeight } = moduleSize;
-  const headerHeight = 40;
-  const topMargin = 20;
-  const bottomMargin = 30;
-  const sideMargin = 15;
-  const portSpacing = 25;
   
-  // 输入端口 - 左侧均匀分布
-  if (inputs.length > 0) {
-    inputs.forEach((port, index) => {
-      // 从topMargin开始，按照portSpacing间距分布
-      const yOffset = headerHeight + topMargin + (index * portSpacing);
-      
-      positions[port.name] = { 
-        side: 'left', 
-        offset: yOffset,
-        bus: port.width > 1,
-        direction: 'input'
-      };
-    });
-  }
-
-  // 输出端口 - 右侧均匀分布
-  if (outputs.length > 0) {
-    outputs.forEach((port, index) => {
-      // 从topMargin开始，按照portSpacing间距分布
-      const yOffset = headerHeight + topMargin + (index * portSpacing);
-      
-      positions[port.name] = { 
-        side: 'right', 
-        offset: yOffset,
-        bus: port.width > 1,
-        direction: 'output'
-      };
-    });
-  }
-
-  // 双向端口 - 底部均匀分布
-  if (inouts.length > 0) {
-    const availableWidth = symbolWidth - 2 * sideMargin;
+  const headerHeight = 10; // 模块标题高度
+  const portStartY = headerHeight + 15; // 端口开始位置，避开标题区域
+  const portEndY = moduleSize.height - 80; // 端口结束位置，避开底部区域
+  
+  // 计算可用的端口分布空间
+  const availableHeight = portEndY - portStartY;
+  
+  // 输入端口（左侧）
+  inputs.forEach((port, index) => {
+    let yPosition;
+    if (inputs.length === 1) {
+      // 单个端口居中
+      yPosition = portStartY + availableHeight / 2;
+    } else {
+      // 多个端口均匀分布
+      yPosition = portStartY + (availableHeight / (inputs.length - 1)) * index;
+    }
     
-    inouts.forEach((port, index) => {
-      let xOffset;
-      if (inouts.length === 1) {
-        // 单个端口居中
-        xOffset = symbolWidth / 2;
-      } else {
-        // 多个端口均匀分布
-        const spacing = availableWidth / (inouts.length - 1);
-        xOffset = sideMargin + (spacing * index);
-      }
-      
-      positions[port.name] = { 
-        side: 'bottom', 
-        offset: xOffset,
-        bus: port.width > 1,
-        direction: 'inout'
-      };
-    });
-  }
-
-  // Debug输出端口位置
-  console.log(`Port positions for module (${symbolWidth}x${symbolHeight}):`, positions);
-
+    positions[port.name] = {
+      x: 0,
+      y: Math.round(yPosition),
+      side: 'left',
+      direction: 'input',
+      offset: Math.round(yPosition) // 相对于模块顶部的偏移
+    };
+  });
+  
+  // 输出端口（右侧）
+  outputs.forEach((port, index) => {
+    let yPosition;
+    if (outputs.length === 1) {
+      // 单个端口居中
+      yPosition = portStartY + availableHeight / 2;
+    } else {
+      // 多个端口均匀分布
+      yPosition = portStartY + (availableHeight / (outputs.length - 1)) * index;
+    }
+    
+    positions[port.name] = {
+      x: moduleSize.width,
+      y: Math.round(yPosition),
+      side: 'right',
+      direction: 'output',
+      offset: Math.round(yPosition) // 相对于模块顶部的偏移
+    };
+  });
+  
+  // 双向端口（底部）
+  inouts.forEach((port, index) => {
+    let xPosition;
+    if (inouts.length === 1) {
+      // 单个端口居中
+      xPosition = moduleSize.width / 2;
+    } else {
+      // 多个端口均匀分布
+      const spacing = moduleSize.width / (inouts.length + 1);
+      xPosition = spacing * (index + 1);
+    }
+    
+    positions[port.name] = {
+      x: Math.round(xPosition),
+      y: moduleSize.height,
+      side: 'bottom',
+      direction: 'inout',
+      offset: Math.round(xPosition) // 相对于模块左边的偏移
+    };
+  });
+  
   return positions;
 };
 
-// 信号颜色分类
-export const getSignalColor = (netName) => {
-  if (typeof netName !== 'string') return '#666';
+// 优化：缓存路由偏移计算
+const routeOffsetCache = new Map();
+
+export const calculateRouteOffset = (driver, load, allNodes, usedPaths, routeIndex) => {
+  const cacheKey = `${driver.instance}-${driver.port}-${load.instance}-${load.port}-${routeIndex}`;
   
-  if (netName.includes('clk')) return '#2196F3';
-  if (netName.includes('bus') || netName.includes('addr') || netName.includes('data')) return '#FF9800';
-  if (netName.includes('irq') || netName.includes('interrupt')) return '#9C27B0';
-  if (netName.includes('gpio')) return '#4CAF50';
-  if (netName.includes('rst') || netName.includes('reset')) return '#f44336';
-  return '#666';
+  if (routeOffsetCache.has(cacheKey)) {
+    return routeOffsetCache.get(cacheKey);
+  }
+
+  const baseOffset = 20;
+  const routeSpacing = 15;
+  const verticalOffset = routeIndex * routeSpacing;
+  
+  const result = {
+    pathOptions: {
+      offset: baseOffset + verticalOffset,
+      borderRadius: 8
+    }
+  };
+  
+  // 缓存结果
+  routeOffsetCache.set(cacheKey, result);
+  
+  return result;
 };
 
-// 计算路由偏移
-export const calculateRouteOffset = (driver, load, nodes, usedPaths, edgeIndex) => {
-  const pathKey = `${driver.instance}-${load.instance}`;
-  const reversePathKey = `${load.instance}-${driver.instance}`;
-  
-  // 如果路径已被使用，添加偏移
-  if (usedPaths.has(pathKey) || usedPaths.has(reversePathKey)) {
-    const offset = (edgeIndex % 3 - 1) * 20; // -20, 0, 20 的偏移
-    return {
-      style: {
-        strokeWidth: 2,
-      },
-      pathOptions: {
-        offset: offset,
-        borderRadius: 10
-      }
-    };
-  }
-  
-  return {};
+// 信号颜色映射
+const SIGNAL_COLORS = {
+  clock: '#ff6b6b',
+  reset: '#4ecdc4', 
+  data: '#45b7d1',
+  control: '#96ceb4',
+  power: '#feca57',
+  default: '#74b9ff'
+};
+
+export const getSignalColor = (signalType) => {
+  return SIGNAL_COLORS[signalType] || SIGNAL_COLORS.default;
+};
+
+// 清理缓存的工具函数
+export const clearLayoutCache = () => {
+  sizeCache.clear();
+  routeOffsetCache.clear();
+};
+
+// 辅助函数：调试端口位置
+export const debugPortPositions = (ports, moduleSize) => {
+  const positions = calculatePortPositions(ports, moduleSize);
+  console.log('Port positions debug:', {
+    moduleSize,
+    ports: ports.map(p => ({ name: p.name, direction: p.direction })),
+    positions
+  });
+  return positions;
 };

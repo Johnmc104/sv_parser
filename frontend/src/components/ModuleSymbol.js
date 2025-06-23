@@ -40,7 +40,7 @@ const ModuleSymbol = memo(({ data, selected, id }) => {
     if (nodeRef.current && size) {
       nodeRef.current.style.width = `${size.width}px`;
       nodeRef.current.style.height = `${size.height}px`;
-      console.log(`Forcing size update for ${instanceName}: ${size.width}x${size.height}`);
+      //console.log(`Forcing size update for ${instanceName}: ${size.width}x${size.height}`);
     }
   }, [size, instanceName]);
 
