@@ -1,7 +1,5 @@
-// filepath: /home/zhhe/work/sv_parser/frontend/src/components/ChipVisualization.js
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
-  addEdge,
   Background,
   Controls,
   MiniMap,
@@ -17,16 +15,15 @@ const nodeTypes = {
   moduleNode: ModuleNode,
 };
 
-function ChipVisualization({ data }) {
+function ChipVisualization({ data, selectedModule, onModuleSelect }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
   const [stats, setStats] = useState(null);
   const [validation, setValidation] = useState(null);
+  const [filteredView, setFilteredView] = useState(false);
 
   useEffect(() => {
     if (data) {
-      // 支持多种数据格式
       const flowData = data.flowData || data.flow_data || data.data?.flow_data;
       const statsData = data.stats || data.data?.stats;
       const validationData = data.validation || data.data?.validation;
@@ -41,28 +38,68 @@ function ChipVisualization({ data }) {
     }
   }, [data, setNodes, setEdges]);
 
-  const onConnect = useCallback((params) => {
-    setEdges((eds) => addEdge(params, eds));
-  }, [setEdges]);
+  // 根据选中的模块过滤显示
+  useEffect(() => {
+    if (selectedModule && data) {
+      const flowData = data.flowData || data.flow_data || data.data?.flow_data;
+      if (flowData && filteredView) {
+        // 显示与选中模块相关的连接
+        const relatedEdges = flowData.edges.filter(edge => 
+          edge.source === selectedModule || edge.target === selectedModule
+        );
+        
+        const relatedNodeIds = new Set([selectedModule]);
+        relatedEdges.forEach(edge => {
+          relatedNodeIds.add(edge.source);
+          relatedNodeIds.add(edge.target);
+        });
+        
+        const relatedNodes = flowData.nodes.filter(node => 
+          relatedNodeIds.has(node.id)
+        );
+        
+        setNodes(relatedNodes);
+        setEdges(relatedEdges);
+      }
+    }
+  }, [selectedModule, data, filteredView, setNodes, setEdges]);
 
   const onNodeClick = useCallback((event, node) => {
-    setSelectedNode(node);
-  }, []);
+    onModuleSelect(node.id);
+  }, [onModuleSelect]);
 
   const onLayoutNodes = useCallback(() => {
-    // 改进的自动布局算法
     const layoutNodes = nodes.map((node, index) => {
+      const isSelected = node.id === selectedModule;
       const isTopLevel = node.data?.isTop || node.data?.label?.includes('top');
+      
       return {
         ...node,
         position: {
-          x: isTopLevel ? 300 : (index % 4) * 250 + 50,
-          y: isTopLevel ? 50 : Math.floor(index / 4) * 180 + 200,
+          x: isTopLevel ? 400 : isSelected ? 200 : (index % 4) * 250 + 50,
+          y: isTopLevel ? 50 : isSelected ? 150 : Math.floor(index / 4) * 180 + 250,
         },
+        style: {
+          ...node.style,
+          border: isSelected ? '3px solid #2196F3' : node.style?.border,
+          boxShadow: isSelected ? '0 0 0 3px rgba(33, 150, 243, 0.3)' : node.style?.boxShadow,
+        }
       };
     });
     setNodes(layoutNodes);
-  }, [nodes, setNodes]);
+  }, [nodes, selectedModule, setNodes]);
+
+  const toggleFilteredView = useCallback(() => {
+    setFilteredView(!filteredView);
+    if (!filteredView && data) {
+      // 重新加载所有节点和边
+      const flowData = data.flowData || data.flow_data || data.data?.flow_data;
+      if (flowData) {
+        setNodes(flowData.nodes || []);
+        setEdges(flowData.edges || []);
+      }
+    }
+  }, [filteredView, data, setNodes, setEdges]);
 
   const getModuleTypeColor = (moduleType) => {
     const colors = {
@@ -82,14 +119,36 @@ function ChipVisualization({ data }) {
     return '#607D8B';
   };
 
+  // 高亮显示与选中模块相关的节点和边
+  const highlightedNodes = nodes.map(node => ({
+    ...node,
+    style: {
+      ...node.style,
+      opacity: !selectedModule || node.id === selectedModule || 
+               edges.some(edge => 
+                 (edge.source === selectedModule && edge.target === node.id) ||
+                 (edge.target === selectedModule && edge.source === node.id)
+               ) ? 1 : 0.3,
+      border: node.id === selectedModule ? '3px solid #2196F3' : node.style?.border,
+    }
+  }));
+
+  const highlightedEdges = edges.map(edge => ({
+    ...edge,
+    style: {
+      ...edge.style,
+      opacity: !selectedModule || edge.source === selectedModule || edge.target === selectedModule ? 1 : 0.2,
+      strokeWidth: edge.source === selectedModule || edge.target === selectedModule ? 3 : 2,
+    }
+  }));
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={highlightedNodes}
+        edges={highlightedEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
@@ -106,6 +165,24 @@ function ChipVisualization({ data }) {
             <button onClick={onLayoutNodes} className="layout-btn">
               Auto Layout
             </button>
+            
+            <button 
+              onClick={toggleFilteredView} 
+              className={`filter-btn ${filteredView ? 'active' : ''}`}
+            >
+              {filteredView ? 'Show All' : 'Filter View'}
+            </button>
+            
+            {selectedModule && (
+              <div className="selected-module-info">
+                <h4>Selected: {selectedModule}</h4>
+                <p>Connected modules: {
+                  edges.filter(edge => 
+                    edge.source === selectedModule || edge.target === selectedModule
+                  ).length
+                }</p>
+              </div>
+            )}
             
             {stats && (
               <div className="design-stats">
@@ -129,17 +206,6 @@ function ChipVisualization({ data }) {
                 <p className={validation.warning_count > 0 ? 'warning' : 'success'}>
                   Warnings: {validation.warning_count || 0}
                 </p>
-              </div>
-            )}
-            
-            {selectedNode && (
-              <div className="selected-node-info">
-                <h4>Selected: {selectedNode.data.label}</h4>
-                <p>Type: {selectedNode.type}</p>
-                <p>Ports: {selectedNode.data.ports?.length || 0}</p>
-                {selectedNode.data.instances && (
-                  <p>Instances: {selectedNode.data.instances.length}</p>
-                )}
               </div>
             )}
           </div>

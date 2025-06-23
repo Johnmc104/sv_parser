@@ -1,497 +1,127 @@
+/* 应用主体样式 */
 .app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #f5f5f5;
 }
 
 .app-header {
-  background-color: #2c3e50;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 1rem;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 1.5rem;
+  font-weight: 600;
 }
 
+.header-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.reload-btn, .logs-toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.reload-btn {
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.reload-btn:hover {
+  background-color: rgba(255,255,255,0.3);
+}
+
+.logs-toggle-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.logs-toggle-btn:hover {
+  background-color: #1976D2;
+}
+
+.logs-toggle-btn.active {
+  background-color: #FF9800;
+}
+
+/* 主内容区域 */
 .app-content {
   flex: 1;
   display: flex;
+  overflow: hidden;
 }
 
 .sidebar {
-  width: 300px;
-  background-color: #f5f5f5;
-  padding: 1rem;
-  overflow-y: auto;
-  border-right: 1px solid #ddd;
+  width: 350px;
+  background-color: white;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
+  background-color: #fafafa;
   position: relative;
 }
 
-/* 进程管理器样式 */
-.process-manager {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.status-text {
-  font-weight: bold;
-}
-
-.last-check {
-  font-size: 0.8rem;
-  opacity: 0.8;
-}
-
-.control-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.control-buttons button {
-  padding: 0.25rem 0.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.check-btn {
-  background-color: #2196F3;
-  color: white;
-}
-
-.start-btn {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.stop-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-/* 文件上传样式 */
-.file-upload {
-  margin-bottom: 2rem;
-}
-
-.upload-section {
-  margin: 1rem 0;
-}
-
-.top-module-input {
-  margin: 0.5rem 0;
-}
-
-.top-module-input label {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.top-module-input input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.upload-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 0.5rem;
-}
-
-.upload-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.selected-files {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background-color: #e3f2fd;
-  border-radius: 4px;
-}
-
-.selected-files ul {
-  margin: 0.5rem 0 0 0;
-  padding-left: 1rem;
-}
-
-/* 日志样式 */
-.logs-section {
-  margin-top: 2rem;
-}
-
-.logs {
-  height: 200px;
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.5rem;
-  font-family: monospace;
-  font-size: 0.8rem;
-}
-
-.log-entry {
-  margin-bottom: 0.25rem;
-  padding: 0.25rem;
-  border-radius: 2px;
-}
-
-.log-info {
-  background-color: #e3f2fd;
-}
-
-.log-error {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-.log-warning {
-  background-color: #fff3e0;
-  color: #ef6c00;
-}
-
-.log-success {
-  background-color: #e8f5e8;
-  color: #2e7d32;
-}
-
-.timestamp {
-  font-weight: bold;
-  margin-right: 0.5rem;
-}
-
-/* 模块节点样式 */
-.module-node {
-  background: white;
-  border: 2px solid #1a192b;
-  border-radius: 8px;
-  min-width: 200px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.module-node.selected {
-  border-color: #2196F3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
-}
-
-.module-header {
-  background-color: #1a192b;
-  color: white;
-  padding: 0.5rem;
-  text-align: center;
-  border-radius: 6px 6px 0 0;
-}
-
-.module-body {
-  padding: 0.5rem;
-}
-
-.ports-container {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.port {
-  display: flex;
-  align-items: center;
-  margin: 0.25rem 0;
-  position: relative;
-}
-
-.input-port {
-  justify-content: flex-start;
-}
-
-.output-port {
-  justify-content: flex-end;
-}
-
-.port-label {
-  font-size: 0.8rem;
-  margin: 0 0.5rem;
-}
-
-.port-width {
-  color: #666;
-  font-size: 0.7rem;
-}
-
-.instances {
-  border-top: 1px solid #eee;
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.instances-header {
-  font-weight: bold;
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
-}
-
-.instance-item {
-  font-size: 0.7rem;
-  color: #666;
-  margin: 0.1rem 0;
-}
-
-/* React Flow 面板样式 */
-.panel-content {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.layout-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 0.5rem;
-}
-
-.selected-node-info {
-  border-top: 1px solid #eee;
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.selected-node-info h4 {
-  margin: 0 0 0.5rem 0;
-  color: #2196F3;
-}
-
-.selected-node-info p {
-  margin: 0.25rem 0;
-  font-size: 0.8rem;
-}
-
-/* 状态样式 */
-.loading, .error, .welcome {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 层次导航器样式 */
+.hierarchy-navigator {
   height: 100%;
+  display: flex;
   flex-direction: column;
-  text-align: center;
-  padding: 2rem;
 }
 
-.loading {
-  color: #2196F3;
-}
-
-.error {
-  color: #f44336;
-}
-
-.welcome h2 {
-  color: #1a192b;
-  margin-bottom: 1rem;
-}
-
-.welcome p {
-  color: #666;
-  font-size: 1.1rem;
-}
-
-/* 新增样式 */
-.demo-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 0.5rem;
-}
-
-.demo-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.design-info {
-  margin: 1rem 0;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-}
-
-.info-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.info-tabs button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.info-tabs button.active {
-  background-color: #2196F3;
-  color: white;
-  border-color: #2196F3;
-}
-
-.logs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.clear-logs-btn {
-  padding: 0.25rem 0.5rem;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.design-stats, .validation-info {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  border-top: 1px solid #ddd;
-}
-
-.design-stats h4, .validation-info h4 {
-  margin: 0 0 0.5rem 0;
-  color: #1a192b;
-}
-
-.design-stats p, .validation-info p {
-  margin: 0.25rem 0;
-  font-size: 0.8rem;
-}
-
-.validation-info p.error {
-  color: #f44336;
-}
-
-.validation-info p.warning {
-  color: #FF9800;
-}
-
-.validation-info p.success {
-  color: #4CAF50;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #2196F3;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.feature {
-  padding: 1rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.feature h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1a192b;
-}
-
-.feature p {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-/* 层次视图样式 */
-.hierarchy-view {
-  display: flex;
-  height: 100%;
-}
-
-.hierarchy-panel {
-  width: 40%;
-  padding: 1rem;
-  border-right: 1px solid #ddd;
-  overflow-y: auto;
-}
-
-.details-panel {
+.navigator-section {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
 }
 
+.navigator-section:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.navigator-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 .hierarchy-tree {
-  margin-top: 1rem;
+  font-size: 0.9rem;
 }
 
 .hierarchy-node {
-  margin: 0.25rem 0;
+  margin: 0.2rem 0;
 }
 
 .hierarchy-item {
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
+  padding: 0.4rem 0.5rem;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  gap: 0.5rem;
 }
 
 .hierarchy-item:hover {
@@ -500,100 +130,424 @@
 
 .hierarchy-item.selected {
   background-color: #e3f2fd;
-  color: #1976d2;
+  color: #1976D2;
+  font-weight: 500;
+}
+
+.hierarchy-item.disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+.hierarchy-item.disabled:hover {
+  background-color: transparent;
 }
 
 .expand-icon {
   width: 16px;
   text-align: center;
-  margin-right: 0.5rem;
-  cursor: pointer;
-  user-select: none;
+  font-size: 0.8rem;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.node-icon {
+  font-size: 1rem;
 }
 
 .node-name {
-  font-weight: bold;
+  flex: 1;
+  font-family: 'Courier New', monospace;
 }
 
-.instance-count {
-  margin-left: 0.5rem;
+.no-schematic-badge {
+  background-color: #ffecb3;
+  color: #f57c00;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* 模块信息样式 */
+.module-info {
+  background-color: #f9f9f9;
+  padding: 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.3rem 0;
+}
+
+.info-item label {
+  font-weight: 500;
   color: #666;
-  font-size: 0.8rem;
 }
 
-.module-details {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 1rem;
+.info-item span {
+  font-family: monospace;
+  color: #333;
 }
 
-.module-details h4 {
-  margin: 0 0 1rem 0;
-  color: #1a192b;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+.ports-list {
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.detail-section {
-  margin: 1rem 0;
-}
-
-.detail-section h5 {
+.ports-list h4 {
   margin: 0 0 0.5rem 0;
-  color: #666;
+  color: #555;
   font-size: 0.9rem;
 }
 
-.port-item, .instance-item, .parameter-item {
+.port-item {
   display: flex;
   align-items: center;
-  padding: 0.25rem 0;
+  padding: 0.3rem;
+  margin: 0.2rem 0;
+  background-color: #f5f5f5;
+  border-radius: 3px;
   font-size: 0.8rem;
+  gap: 0.5rem;
 }
 
 .port-direction {
-  padding: 0.1rem 0.3rem;
+  padding: 0.1rem 0.4rem;
   border-radius: 3px;
-  font-size: 0.7rem;
-  margin-right: 0.5rem;
+  color: white;
+  font-weight: 500;
   min-width: 50px;
   text-align: center;
 }
 
 .port-item.input .port-direction {
   background-color: #4CAF50;
-  color: white;
 }
 
 .port-item.output .port-direction {
-  background-color: #FF9800;
-  color: white;
+  background-color: #2196F3;
 }
 
 .port-item.inout .port-direction {
-  background-color: #9C27B0;
-  color: white;
+  background-color: #FF9800;
 }
 
-.port-name, .instance-name, .param-name {
-  font-weight: bold;
-  margin-right: 0.5rem;
-}
-
-.instance-type, .param-value {
-  color: #666;
+.port-name {
+  font-family: monospace;
+  font-weight: 500;
 }
 
 .port-width {
-  color: #888;
+  color: #666;
+  font-family: monospace;
   font-size: 0.7rem;
 }
 
-.no-data, .no-selection {
+.port-type {
+  margin-left: auto;
+  color: #999;
+  font-size: 0.7rem;
+}
+
+/* 原理图查看器样式 */
+.schematic-viewer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.schematic-info {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  min-width: 200px;
+}
+
+.schematic-info h3 {
+  margin: 0 0 0.8rem 0;
+  color: #333;
+  font-family: monospace;
+}
+
+.view-controls {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
+  gap: 0.5rem;
+}
+
+.view-controls button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.view-controls button:hover {
+  background-color: #f0f0f0;
+}
+
+.view-controls button.active {
+  background-color: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+/* 信号控制面板 */
+.net-controls {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  min-width: 200px;
+}
+
+.selected-net {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.selected-net strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.selected-net div {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0.2rem 0;
+}
+
+.selected-net button {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.net-statistics strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.net-statistics div {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.2rem 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* 模块符号样式 */
+.module-symbol {
+  font-family: Arial, sans-serif;
+  user-select: none;
+}
+
+.symbol-header {
+  padding: 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  background-color: #f8f9fa;
+}
+
+.instance-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 0.2rem;
+}
+
+.module-type {
+  font-size: 0.7rem;
   color: #666;
   font-style: italic;
+}
+
+.port-label {
+  color: #333;
+  background-color: rgba(255,255,255,0.9);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+  border: 1px solid #ddd;
+  z-index: 10;
+}
+
+.bus-indicator {
+  color: #FF9800;
+  font-weight: bold;
+  margin-left: 0.2rem;
+}
+
+/* 日志区域样式 */
+.logs-section {
+  border-top: 1px solid #e0e0e0;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+}
+
+.logs-header {
+  padding: 0.8rem 1rem;
+  background-color: white;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logs-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.clear-logs-btn {
+  padding: 0.3rem 0.6rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.logs-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.log-entry {
+  display: flex;
+  align-items: flex-start;
+  margin: 0.2rem 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  gap: 0.5rem;
+}
+
+.log-entry.log-success {
+  background-color: #e8f5e8;
+  border-left: 3px solid #4CAF50;
+}
+
+.log-entry.log-error {
+  background-color: #ffebee;
+  border-left: 3px solid #f44336;
+}
+
+.log-entry.log-info {
+  background-color: #e3f2fd;
+  border-left: 3px solid #2196F3;
+}
+
+.log-entry.log-warning {
+  background-color: #fff3e0;
+  border-left: 3px solid #FF9800;
+}
+
+.timestamp {
+  color: #666;
+  font-family: monospace;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.message {
+  flex: 1;
+  word-break: break-word;
+}
+
+/* 加载动画 */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: 40vh;
+  }
+  
+  .hierarchy-navigator {
+    flex-direction: row;
+  }
+  
+  .navigator-section {
+    flex: 1;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: none;
+  }
+  
+  .navigator-section:last-child {
+    border-right: none;
+  }
+}
+
+/* ReactFlow 自定义样式 */
+.react-flow__handle {
+  width: 8px !important;
+  height: 8px !important;
+  border: 2px solid #333 !important;
+  background: white !important;
+}
+
+.react-flow__handle-connecting {
+  background: #2196F3 !important;
+}
+
+.react-flow__edge.selected {
+  z-index: 1000;
 }
