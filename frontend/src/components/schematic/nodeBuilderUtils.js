@@ -3,6 +3,7 @@
  */
 
 import { calculateModuleSize, calculatePortPositions } from './moduleLayoutUtils';
+import { generateLayeredLayout, optimizeLayerArrangement } from './layeredLayoutUtils';
 
 // 从原理图数据构建节点
 export const buildNodesFromSchematicData = (schematicView, designData, onNavigate) => {
@@ -35,7 +36,71 @@ export const buildNodesFromSchematicData = (schematicView, designData, onNavigat
 };
 
 // 从模块定义构建节点
-export const buildNodesFromModuleDefinition = (moduleInfo, designData, onNavigate) => {
+export const buildNodesFromModuleDefinition = (moduleInfo, designData, onNavigate, useLayeredLayout = true) => {
+  const defaultNodes = [];
+
+  if (moduleInfo.internal_structure?.instances && moduleInfo.internal_structure.instances.length > 0) {
+    if (useLayeredLayout) {
+      // 使用新的分层布局
+      return buildLayeredNodes(moduleInfo, designData, onNavigate);
+    } else {
+      // 保持原有的网格布局作为备选
+      return buildGridNodes(moduleInfo, designData, onNavigate);
+    }
+  }
+
+  return defaultNodes;
+};
+
+const buildLayeredNodes = (moduleInfo, designData, onNavigate) => {
+  const { positions, layers } = generateLayeredLayout(moduleInfo, designData);
+  const connections = moduleInfo.internal_structure.port_connections || [];
+  
+  // 应用连线优化
+  const optimizedPositions = optimizeLayerArrangement(positions, connections, layers);
+  const nodes = [];
+  
+  optimizedPositions.forEach((posData, instanceName) => {
+    const instance = moduleInfo.internal_structure.instances.find(i => i.name === instanceName);
+    if (!instance) return;
+    
+    // 使用标准端口位置计算，保持输入左侧，输出右侧
+    const portPositions = calculatePortPositions(
+      posData.moduleInfo.ports || [], 
+      posData.moduleSize
+    );
+    
+    const nodeData = {
+      id: instanceName,
+      type: 'moduleSymbol',
+      position: { x: posData.x, y: posData.y },
+      data: {
+        instanceName: instance.name,
+        moduleType: instance.module_type,
+        size: posData.moduleSize,
+        portPositions: portPositions,
+        moduleInfo: posData.moduleInfo,
+        layer: posData.layer,
+        isSelected: false,
+        isHighlighted: false,
+        onDoubleClick: () => {
+          console.log(`Double clicked on ${instance.name}, navigating to ${instance.module_type}`);
+          onNavigate(instance.module_type);
+        }
+      },
+      style: {
+        width: posData.moduleSize.width,
+        height: posData.moduleSize.height,
+      }
+    };
+    
+    nodes.push(nodeData);
+  });
+  
+  return nodes;
+};
+
+const buildGridNodes = (moduleInfo, designData, onNavigate) => {
   const defaultNodes = [];
 
   if (moduleInfo.internal_structure?.instances && moduleInfo.internal_structure.instances.length > 0) {

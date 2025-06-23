@@ -21,7 +21,7 @@ export const calculateModuleSize = (ports) => {
   const topMargin = 10;
   const bottomMargin = 50;
   const sideMargin = 15;
-  const minWidth = 180;
+  const minWidth = 160;
   const minHeight = 100;
 
   const maxSidePorts = Math.max(inputs.length, outputs.length);
@@ -187,4 +187,123 @@ export const debugPortPositions = (ports, moduleSize) => {
     positions
   });
   return positions;
+};
+
+// 增强端口位置计算，考虑连接方向
+export const calculateOptimizedPortPositions = (ports, moduleSize, connections, instanceName, allPositions) => {
+  const portPositions = {};
+  
+  if (!ports || ports.length === 0) {
+    return portPositions;
+  }
+
+  // 基础端口位置计算
+  const basePositions = calculatePortPositions(ports, moduleSize);
+  
+  // 分析连接方向，优化端口位置
+  const connectionAnalysis = analyzePortConnections(ports, connections, instanceName, allPositions);
+  
+  ports.forEach(port => {
+    const basePos = basePositions[port.name];
+    if (!basePos) return;
+    
+    const connectionInfo = connectionAnalysis[port.name];
+    
+    if (connectionInfo && connectionInfo.preferredSide) {
+      // 根据连接分析调整端口位置
+      portPositions[port.name] = {
+        ...basePos,
+        side: connectionInfo.preferredSide,
+        offset: calculateOptimalOffset(port, connectionInfo.targetPositions, moduleSize)
+      };
+    } else {
+      portPositions[port.name] = basePos;
+    }
+  });
+
+  return portPositions;
+};
+
+// 分析端口连接以确定最优位置
+const analyzePortConnections = (ports, connections, instanceName, allPositions) => {
+  const analysis = {};
+  
+  if (!connections || !allPositions) return analysis;
+  
+  connections.forEach(connection => {
+    const instancePorts = connection.connections?.filter(c => c.type === 'instance_port') || [];
+    
+    // 找到当前实例的端口
+    const currentInstancePorts = instancePorts.filter(p => p.instance === instanceName);
+    const otherInstancePorts = instancePorts.filter(p => p.instance !== instanceName);
+    
+    currentInstancePorts.forEach(currentPort => {
+      const portName = currentPort.port;
+      
+      if (!analysis[portName]) {
+        analysis[portName] = {
+          targetPositions: [],
+          preferredSide: null
+        };
+      }
+      
+      // 收集连接目标的位置信息
+      otherInstancePorts.forEach(otherPort => {
+        const targetPosition = allPositions.get(otherPort.instance);
+        if (targetPosition) {
+          analysis[portName].targetPositions.push({
+            x: targetPosition.x,
+            y: targetPosition.y,
+            instance: otherPort.instance,
+            port: otherPort.port
+          });
+        }
+      });
+      
+      // 根据目标位置确定最优端口侧面
+      if (analysis[portName].targetPositions.length > 0) {
+        analysis[portName].preferredSide = determineOptimalSide(
+          allPositions.get(instanceName),
+          analysis[portName].targetPositions
+        );
+      }
+    });
+  });
+  
+  return analysis;
+};
+
+// 确定最优端口侧面
+const determineOptimalSide = (modulePosition, targetPositions) => {
+  if (!modulePosition || targetPositions.length === 0) return null;
+  
+  // 计算目标位置的重心
+  const avgX = targetPositions.reduce((sum, pos) => sum + pos.x, 0) / targetPositions.length;
+  const avgY = targetPositions.reduce((sum, pos) => sum + pos.y, 0) / targetPositions.length;
+  
+  const deltaX = avgX - modulePosition.x;
+  const deltaY = avgY - modulePosition.y;
+  
+  // 根据相对位置确定最优侧面
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    return deltaX > 0 ? 'right' : 'left';
+  } else {
+    return deltaY > 0 ? 'bottom' : 'top';
+  }
+};
+
+// 计算最优端口偏移量
+const calculateOptimalOffset = (port, targetPositions, moduleSize) => {
+  if (!targetPositions || targetPositions.length === 0) {
+    // 使用默认偏移量
+    return moduleSize.height / 4;
+  }
+  
+  // 计算目标的Y坐标重心，用于确定端口的垂直位置
+  const avgTargetY = targetPositions.reduce((sum, pos) => sum + pos.y, 0) / targetPositions.length;
+  
+  // 将目标重心映射到模块内的偏移量
+  const relativeOffset = Math.max(20, Math.min(moduleSize.height - 20, moduleSize.height / 3));
+  
+  return relativeOffset;
 };

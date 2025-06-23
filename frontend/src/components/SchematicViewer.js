@@ -38,6 +38,7 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedEdgeInfo, setSelectedEdgeInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [layoutMode, setLayoutMode] = useState('layered'); // 'layered' | 'grid'
 
   // 优化：缓存事件处理器
   const handleEdgeClick = useCallback(
@@ -105,7 +106,8 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
   }, [designData, onNavigate, selectedNet]);
 
   const buildFromModuleDefinition = useCallback((moduleInfo) => {
-    const defaultNodes = buildNodesFromModuleDefinition(moduleInfo, designData, onNavigate);
+    const useLayeredLayout = layoutMode === 'layered';
+    const defaultNodes = buildNodesFromModuleDefinition(moduleInfo, designData, onNavigate, useLayeredLayout);
     setNodes(defaultNodes);
 
     if (moduleInfo.internal_structure?.port_connections) {
@@ -117,7 +119,7 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
     } else {
       setEdges([]);
     }
-  }, [designData, onNavigate, selectedNet]);
+  }, [designData, onNavigate, selectedNet, layoutMode]);
 
   // 优化：缓存处理后的边数据
   const edgesWithClickHandler = useMemo(() => {
@@ -146,6 +148,26 @@ function SchematicViewer({ designData, currentModule, selectedNet, onNetSelect, 
           <Background />
           <Controls />
           <MiniMap />
+          
+          {/* 添加布局模式切换控制 */}
+          <Panel position="top-right">
+            <div style={{ 
+              background: 'white', 
+              padding: '8px', 
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <label style={{ fontSize: '12px', marginRight: '8px' }}>Layout:</label>
+              <select 
+                value={layoutMode} 
+                onChange={(e) => setLayoutMode(e.target.value)}
+                style={{ fontSize: '12px' }}
+              >
+                <option value="layered">Layered (Topology)</option>
+                <option value="grid">Grid (Original)</option>
+              </select>
+            </div>
+          </Panel>
           
           {selectedEdgeInfo && (
             <Panel position="bottom-right" className="signal-info-panel">
