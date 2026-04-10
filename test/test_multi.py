@@ -1,15 +1,9 @@
-"""Comprehensive test: Preprocessor + Multi-module + Instances + Classification"""
-import sys
-sys.path.insert(0, '.')
-
+"""Comprehensive test: Preprocessor + Multi-module + Instances + Classification."""
 from src.verilog_parser import VerilogFileParser
 from src.preprocessor import Preprocessor
 
-print("=" * 60)
-print("TEST 2: Preprocessor + Multi-module with instances")
-print("=" * 60)
-
-rtl = """`define DATA_W 8
+RTL_SOURCE = """\
+`define DATA_W 8
 `define ADDR_W 4
 
 `ifdef SYNTHESIS
@@ -89,79 +83,78 @@ module top_chip #(
 endmodule
 """
 
-pp = Preprocessor()
-pp.add_define("SYNTHESIS")
 
-parser = VerilogFileParser(preprocessor=pp)
-mods = parser.parse_text(rtl, "test_multi.v")
+def _parse_multi():
+    pp = Preprocessor()
+    pp.add_define("SYNTHESIS")
+    parser = VerilogFileParser(preprocessor=pp)
+    return parser.parse_text(RTL_SOURCE, "test_multi.v")
 
-mod_map = {m.name: m for m in mods}
-print("Modules found:", [m.name for m in mods])
-assert len(mods) == 3, "Expected 3 modules, got %d" % len(mods)
 
-# --- sub_fifo ---
-fifo = mod_map["sub_fifo"]
-print("\n[sub_fifo]")
-print("  params:", [(p.name, p.value) for p in fifo.parameters])
-assert len(fifo.parameters) == 2
-assert fifo.parameters[1].value == "8", "DATA_W macro not expanded: got %s" % fifo.parameters[1].value
-print("  ports (%d):" % len(fifo.ports))
-for p in fifo.ports:
-    print("    %s %s w=%d %s" % (p.direction.value, p.name, p.width, p.range_spec))
-assert len(fifo.ports) == 8
+def test_module_count():
+    mods = _parse_multi()
+    assert len(mods) == 3
+    names = [m.name for m in mods]
+    assert "sub_fifo" in names
+    assert "sub_arbiter" in names
+    assert "top_chip" in names
 
-wire_names = [w.name for w in fifo.wires]
-print("  wires:", wire_names)
-print("  sub_fifo OK")
 
-# --- sub_arbiter ---
-arb = mod_map["sub_arbiter"]
-print("\n[sub_arbiter]")
-cls = arb.classify_ports()
-print("  dft:", cls["dft"])
-print("  irq:", cls["interrupts"])
-assert "scan_en" in cls["dft"], "scan_en not classified as DFT"
-assert "irq_out" in cls["interrupts"], "irq_out not classified as interrupt"
-print("  sub_arbiter OK")
+def test_sub_fifo():
+    mods = _parse_multi()
+    fifo = {m.name: m for m in mods}["sub_fifo"]
+    assert len(fifo.parameters) == 2
+    # DATA_W macro should be expanded to 8
+    assert fifo.parameters[1].value == "8"
+    assert len(fifo.ports) == 8
+    wire_names = [w.name for w in fifo.wires]
+    assert "wr_ptr" in wire_names
+    assert "rd_ptr" in wire_names
 
-# --- top_chip ---
-top = mod_map["top_chip"]
-print("\n[top_chip]")
-print("  ports: %d (%din/%dout/%dio)" % (
-    len(top.ports), len(top.input_ports), len(top.output_ports), len(top.inout_ports)))
-print("  instances: %d" % len(top.instances))
 
-for inst in top.instances:
-    print("  inst: %s (%s)" % (inst.instance_name, inst.module_type))
-    print("    params:", inst.parameters)
-    print("    conns:", [(c.port_name, c.signal_expr) for c in inst.connections])
+def test_sub_arbiter_classification():
+    mods = _parse_multi()
+    arb = {m.name: m for m in mods}["sub_arbiter"]
+    cls = arb.classify_ports()
+    assert "scan_en" in cls["dft"]
+    assert "irq_out" in cls["interrupts"]
 
-assert len(top.instances) == 2
-assert top.instances[0].instance_name == "u_fifo"
-assert top.instances[0].module_type == "sub_fifo"
-assert top.instances[0].parameters == {"DEPTH": "FIFO_DEPTH", "WIDTH": "8"}
-assert len(top.instances[0].connections) == 8
-assert top.instances[1].instance_name == "u_arb"
-assert top.instances[1].module_type == "sub_arbiter"
 
-# Port classification
-cls = top.classify_ports()
-print("\n  Port classification:")
-print("    clocks:", [c["port"] for c in cls["clocks"]])
-print("    resets:", [r["port"] for r in cls["resets"]])
-print("    dft:", cls["dft"])
-print("    irq:", cls["interrupts"])
-assert any(c["port"] == "sys_clk" for c in cls["clocks"])
-assert any(c["port"] == "tck" for c in cls["clocks"])
-assert any(r["port"] == "sys_rst_n" for r in cls["resets"])
+def test_top_chip_ports():
+    mods = _parse_multi()
+    top = {m.name: m for m in mods}["top_chip"]
+    assert len(top.ports) == 10
+    assert len(top.input_ports) == 6
+    assert len(top.output_ports) == 3
+    assert len(top.inout_ports) == 1
 
-# Hierarchy check
-assert top.instantiated_modules == {"sub_fifo", "sub_arbiter"}
-print("  top_chip OK")
 
-if parser.errors:
-    print("\nParser errors:", parser.errors)
+def test_top_chip_instances():
+    mods = _parse_multi()
+    top = {m.name: m for m in mods}["top_chip"]
+    assert len(top.instances) == 2
 
-print("\n" + "=" * 60)
-print("ALL TESTS PASSED")
-print("=" * 60)
+    u_fifo = top.instances[0]
+    assert u_fifo.instance_name == "u_fifo"
+    assert u_fifo.module_type == "sub_fifo"
+    assert u_fifo.parameters == {"DEPTH": "FIFO_DEPTH", "WIDTH": "8"}
+    assert len(u_fifo.connections) == 8
+
+    u_arb = top.instances[1]
+    assert u_arb.instance_name == "u_arb"
+    assert u_arb.module_type == "sub_arbiter"
+
+
+def test_top_chip_classification():
+    mods = _parse_multi()
+    top = {m.name: m for m in mods}["top_chip"]
+    cls = top.classify_ports()
+    assert any(c["port"] == "sys_clk" for c in cls["clocks"])
+    assert any(c["port"] == "tck" for c in cls["clocks"])
+    assert any(r["port"] == "sys_rst_n" for r in cls["resets"])
+
+
+def test_top_chip_hierarchy():
+    mods = _parse_multi()
+    top = {m.name: m for m in mods}["top_chip"]
+    assert top.instantiated_modules == {"sub_fifo", "sub_arbiter"}

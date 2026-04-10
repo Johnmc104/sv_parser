@@ -5,8 +5,11 @@ Recursively finds Verilog/SystemVerilog files, with optional
 testbench exclusion.
 """
 
+import logging
 import os
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 RTL_EXTENSIONS = {".v", ".sv", ".vh", ".svh"}

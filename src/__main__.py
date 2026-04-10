@@ -34,6 +34,7 @@ if _project_root not in sys.path:
 
 from src.rtl_scan import rtl_scan
 from src.formatter import format_result, set_color
+from src.log import setup_logging
 
 
 _ALL_MODES = ["modules", "hierarchy", "ports", "filelist", "full", "inst", "io"]
@@ -127,6 +128,12 @@ examples:
     p.add_argument("--no-color",
                     action="store_true",
                     help="disable colored terminal output")
+    p.add_argument("-v", "--verbose",
+                    action="count", default=0,
+                    help="increase verbosity (-v info, -vv debug)")
+    p.add_argument("-q", "--quiet",
+                    action="store_true",
+                    help="suppress log output (errors only)")
     return p
 
 
@@ -134,6 +141,9 @@ def main(argv=None):
     # type: (list) -> int
     p = build_parser()
     args = p.parse_args(argv)
+
+    # Logging
+    setup_logging(verbose=args.verbose, quiet=args.quiet)
 
     # --- Resolve input ---
     file_arg = ""
@@ -193,9 +203,13 @@ def main(argv=None):
         # Remove non-serializable internal keys
         out = {k: v for k, v in result.items() if not k.startswith("_")}
         json_str = json.dumps(out, indent=2, ensure_ascii=False)
-        with open(args.output, "w") as f:
-            f.write(json_str)
-            f.write("\n")
+        try:
+            with open(args.output, "w") as f:
+                f.write(json_str)
+                f.write("\n")
+        except IOError as e:
+            sys.stderr.write("Error writing output: %s\n" % e)
+            return 1
         print("Written to %s (%d bytes)" % (args.output, len(json_str)))
         return 0
 

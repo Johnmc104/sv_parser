@@ -10,8 +10,11 @@ Handles:
 Runs as a pure text transformation BEFORE ANTLR lexing/parsing.
 """
 
+import logging
 import os
 import re
+
+logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Set, Tuple
 
 
@@ -270,8 +273,12 @@ class Preprocessor:
             return [f"// [preprocessor] already included: {inc_name}"]
         self._included_files.add(abs_path)
 
-        with open(inc_path, "r", errors="replace") as f:
-            inc_text = f.read()
+        try:
+            with open(inc_path, "r", errors="replace") as f:
+                inc_text = f.read()
+        except IOError as e:
+            logger.warning("Cannot read include file %s: %s", inc_path, e)
+            return [f"// [preprocessor] cannot read: {inc_name}: {e}"]
 
         return self._process(inc_text, inc_path, depth + 1).split("\n")
 

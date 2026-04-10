@@ -58,12 +58,6 @@ test:
 	python3 test/test_multi.py
 	python3 test/test_rtl_scan.py
 
-install:
-	@test -f dist/rtl_scan || { echo "run make build or make build-local first"; exit 1; }
-	@cp -v dist/rtl_scan /usr/local/bin/rtl_scan 2>/dev/null || \
-	 cp -v dist/rtl_scan $$HOME/.local/bin/rtl_scan
-	@echo "Installed: $$(which rtl_scan 2>/dev/null || echo $$HOME/.local/bin/rtl_scan)"
-
 # ---- clean ----
 
 .PHONY: clean clean-build

@@ -6,7 +6,10 @@ Pipeline:  source text  →  Preprocessor  →  ANTLR Lexer/Parser  →  AST Vis
 Supports Verilog-2005 (VerilogParser) grammars.
 """
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 from typing import List, Optional
 
 from antlr4 import CommonTokenStream, InputStream
@@ -147,7 +150,9 @@ class VerilogFileParser:
         try:
             text = self.preprocessor.process_file(filepath)
         except Exception as e:
-            self.errors.append("Preprocess error: %s: %s" % (filepath, e))
+            msg = "Preprocess error: %s: %s" % (filepath, e)
+            logger.warning(msg)
+            self.errors.append(msg)
             with open(filepath, "r", errors="replace") as f:
                 text = f.read()
 
@@ -159,7 +164,9 @@ class VerilogFileParser:
         try:
             text = self.preprocessor.process_text(text, filename)
         except Exception as e:
-            self.errors.append("Preprocess error: %s: %s" % (filename, e))
+            msg = "Preprocess error: %s: %s" % (filename, e)
+            logger.warning(msg)
+            self.errors.append(msg)
 
         return self._parse_text(text, filename)
 
@@ -187,5 +194,7 @@ class VerilogFileParser:
 
             return visitor.modules
         except Exception as e:
-            self.errors.append("Parse error: %s: %s" % (filename, e))
+            msg = "Parse error: %s: %s" % (filename, e)
+            logger.error(msg)
+            self.errors.append(msg)
             return []

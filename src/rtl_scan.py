@@ -23,8 +23,11 @@ Usage::
 """
 
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from .data_model import ModuleInfo
 from .file_discovery import discover_rtl_files
@@ -80,7 +83,10 @@ def rtl_scan(
     # --- resolve input files ---
     resolved_files, rtl_dir, err = _resolve_input(directory, file, files)
     if err:
+        logger.error(err)
         return {"error": err}
+
+    logger.info("Scanning %d file(s)", len(resolved_files))
 
     # --- setup preprocessor ---
     pp = Preprocessor()
@@ -96,6 +102,7 @@ def rtl_scan(
     all_modules = parser.parse_files(resolved_files)
 
     if not all_modules:
+        logger.warning("No modules found in %d file(s)", len(resolved_files))
         result = {"error": "No modules found"}  # type: Dict[str, Any]
         if parser.errors:
             result["parse_errors"] = parser.errors
@@ -105,6 +112,8 @@ def rtl_scan(
     modules = {}  # type: Dict[str, ModuleInfo]
     for mod in all_modules:
         modules[mod.name] = mod
+
+    logger.info("Found %d module(s)", len(modules))
 
     # --- detect top module ---
     top = _resolve_top(modules, top_module)
