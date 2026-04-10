@@ -111,6 +111,7 @@ class ParseResult:
     table.cell(0, 1).text = 'Width'
     table.cell(0, 2).text = 'Dir'
     table.cell(0, 3).text = 'Desc'
+    table.cell(0, 3).text = 'Clk Domain'
 
     #for port in self.ports:
     #  print("Signal: ", port)
