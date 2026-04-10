@@ -28,6 +28,43 @@ ok()    { printf '\033[1;32m[OK]\033[0m    %s\n' "$*"; }
 err()   { printf '\033[1;31m[ERR]\033[0m   %s\n' "$*" >&2; }
 
 # ----------------------------------------------------------------
+# 预下载源码包（避免 Docker 构建时下载）
+# ----------------------------------------------------------------
+OPENSSL_VERSION="3.0.15"
+PYTHON_VERSION="3.11.9"
+SRC_DIR="${SCRIPT_DIR}/src"
+
+ensure_sources() {
+    mkdir -p "${SRC_DIR}"
+
+    local ssl_tar="${SRC_DIR}/openssl-${OPENSSL_VERSION}.tar.gz"
+    if [[ ! -f "${ssl_tar}" ]]; then
+        info "下载 openssl-${OPENSSL_VERSION} 源码..."
+        curl -fSL "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+            -o "${ssl_tar}" || {
+            err "下载失败。请手动下载到 ${ssl_tar}"
+            exit 1
+        }
+        ok "OpenSSL 源码已下载: $(du -h "${ssl_tar}" | cut -f1)"
+    else
+        info "OpenSSL 源码已存在: $(du -h "${ssl_tar}" | cut -f1)"
+    fi
+
+    local py_tar="${SRC_DIR}/Python-${PYTHON_VERSION}.tgz"
+    if [[ ! -f "${py_tar}" ]]; then
+        info "下载 Python-${PYTHON_VERSION} 源码..."
+        curl -fSL "https://registry.npmmirror.com/-/binary/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" \
+            -o "${py_tar}" || {
+            err "下载失败。请手动下载到 ${py_tar}"
+            exit 1
+        }
+        ok "Python 源码已下载: $(du -h "${py_tar}" | cut -f1)"
+    else
+        info "Python 源码已存在: $(du -h "${py_tar}" | cut -f1)"
+    fi
+}
+
+# ----------------------------------------------------------------
 # Docker 构建（默认）
 # ----------------------------------------------------------------
 build_docker() {
@@ -36,6 +73,8 @@ build_docker() {
         err "Docker 未安装。请安装 Docker 或使用 --local 模式。"
         exit 1
     fi
+
+    ensure_sources
 
     info "构建 Docker 镜像 (manylinux2014 / CentOS 7 / glibc 2.17)..."
     docker build \
