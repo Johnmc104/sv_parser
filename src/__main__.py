@@ -35,7 +35,7 @@ if _project_root not in sys.path:
 from src.rtl_scan import rtl_scan
 from src.formatter import format_result, set_color
 from src.log import setup_logging
-from src.version import __version__
+from src.version import __version__, __author__, __email__
 
 
 _ALL_MODES = ["modules", "hierarchy", "ports", "filelist", "full", "inst", "io"]
@@ -74,7 +74,8 @@ def build_parser():
     # type: () -> argparse.ArgumentParser
     p = argparse.ArgumentParser(
         prog="rtl_scan",
-        description="Verilog/SV RTL structure analysis — modules, hierarchy, ports, inst, io",
+        description="rtl_scan %s — Verilog/SV RTL structure analysis\n"
+                    "Author: %s <%s>" % (__version__, __author__, __email__),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 modes:
@@ -137,7 +138,7 @@ examples:
                     help="suppress log output (errors only)")
     p.add_argument("-V", "--version",
                     action="version",
-                    version="%(prog)s " + __version__)
+                    version="%(prog)s " + __version__ + " by " + __author__ + " <" + __email__ + ">")
     return p
 
 
