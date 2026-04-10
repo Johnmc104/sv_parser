@@ -1,19 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""
-PyInstaller spec for rtl_scan binary.
-
-Build:  pyinstaller rtl_scan.spec --clean
-Output: dist/rtl_scan
-"""
+# packaging/rtl_scan.spec — PyInstaller 打包配置
+#
+# 产出: dist/rtl_scan (单一可执行文件)
+# 兼容: Docker 构建 → CentOS 7+ (glibc >= 2.17)
+#       本地构建 → 当前系统 glibc 及以上
 
 import os
+from pathlib import Path
 
 block_cipher = None
-project_root = os.path.abspath('.')
+
+# spec 在 packaging/ 下，项目根在上一级
+ROOT = Path(SPECPATH).parent
 
 a = Analysis(
-    ['src/__main__.py'],
-    pathex=[project_root],
+    [str(ROOT / 'src' / '__main__.py')],
+    pathex=[str(ROOT)],
     binaries=[],
     datas=[],
     hiddenimports=[
@@ -38,7 +40,6 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # Not needed at runtime
         'systemverilog',
         'verilog.VerilogPreParser',
         'verilog.VerilogPreParserVisitor',
