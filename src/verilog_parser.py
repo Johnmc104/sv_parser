@@ -177,10 +177,9 @@ class _ModuleCollector(VerilogParserVisitor):
 
     def _extract_ports(self, decl_ctx, direction: PortDirection):
         """Extract ports from inout_declaration or input_declaration."""
-        # net_type? 'signed'? range_? list_of_port_identifiers
+        # Grammar: 'input' net_type? 'signed'? range_? list_of_port_identifiers
         net_type = decl_ctx.net_type().getText() if decl_ctx.net_type() else ""
-        signed = "signed" if decl_ctx.getToken(VerilogParser.RULE_input_declaration, 0) is None and \
-                 any(c.getText() == "signed" for c in decl_ctx.getChildren()) else ""
+        signed = "signed" if any(c.getText() == "signed" for c in decl_ctx.getChildren()) else ""
 
         range_ctx = decl_ctx.range_()
         width, range_spec = _range_width(range_ctx)
@@ -205,14 +204,16 @@ class _ModuleCollector(VerilogParserVisitor):
         range_ctx = decl_ctx.range_()
         width, range_spec = _range_width(range_ctx)
 
-        # Determine net type text
+        # Determine net type from AST children (not text matching)
         net_type_parts = []
         if decl_ctx.net_type():
             net_type_parts.append(decl_ctx.net_type().getText())
-        # Check for 'reg' token
-        text = decl_ctx.getText()
-        if "reg" in text.split("output")[1].split("[")[0] if "[" in text else text.split("output")[1]:
+        # 'reg' appears as a terminal child in the second alternative:
+        #   'output' 'reg' 'signed'? range_? list_of_variable_port_identifiers
+        if any(c.getText() == "reg" for c in decl_ctx.getChildren()):
             net_type_parts.append("reg")
+        if any(c.getText() == "signed" for c in decl_ctx.getChildren()):
+            net_type_parts.append("signed")
         if decl_ctx.output_variable_type():
             net_type_parts.append(decl_ctx.output_variable_type().getText())
 

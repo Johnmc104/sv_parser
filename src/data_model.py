@@ -47,7 +47,7 @@ _DFT_RE = re.compile(
     re.IGNORECASE,
 )
 _IRQ_RE = re.compile(
-    r'(_intr|_irq|_interrupt|int_req)',
+    r'(^|_)(intr|irq|interrupt)($|_)|int_req',
     re.IGNORECASE,
 )
 
