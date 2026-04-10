@@ -10,7 +10,7 @@ Modules:
   verilog_parser  ANTLR-based parser producing data_model objects
   file_discovery  RTL file discovery utilities
   hierarchy       Hierarchy and dependency analysis
-  rtl_scan        Top-level scanning API (directory → dict/JSON)
+  rtl_scan        Top-level scanning API (file/dir/filelist → dict/JSON)
   formatter       Terminal-friendly output formatters
 """
 
@@ -22,4 +22,4 @@ from .data_model import (
 from .preprocessor import Preprocessor, PreprocessorError
 from .verilog_parser import VerilogFileParser
 from .rtl_scan import rtl_scan, rtl_scan_json
-from .formatter import format_result
+from .formatter import format_result, format_inst, format_io

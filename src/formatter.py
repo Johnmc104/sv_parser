@@ -6,7 +6,10 @@ for terminal output, complementing the JSON output mode.
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .data_model import ModuleInfo, PortInfo
 
 
 # ---------------------------------------------------------------------------
@@ -242,6 +245,117 @@ def format_errors(result):
 
 
 # ---------------------------------------------------------------------------
+# Instantiation template (inst mode)
+# ---------------------------------------------------------------------------
+
+def format_inst(result):
+    # type: (Dict[str, Any]) -> str
+    """Generate Verilog instantiation template from parse result.
+
+    Replicates vtool_inst.py behavior: produces a `.port(w_signal)` style
+    template with wire declarations.
+    """
+    from .data_model import ModuleInfo
+    mod = result.get("_module_info")  # type: ModuleInfo
+    if mod is None:
+        return _red("No module info for inst generation")
+
+    name = mod.name
+    ports = mod.ports
+
+    if not ports:
+        return _yellow("Module '%s' has no ports." % name)
+
+    # Build signal names: replace i_/o_ prefix with w_
+    def _wire_name(p):
+        # type: (PortInfo) -> str
+        n = p.name
+        if n.startswith("i_"):
+            return "w_" + n[2:]
+        if n.startswith("o_"):
+            return "w_" + n[2:]
+        return n
+
+    wire_names = [_wire_name(p) for p in ports]
+    max_port = max(len(p.name) for p in ports)
+    max_wire = max(len(w) for w in wire_names)
+
+    # Wire declarations
+    wire_lines = []
+    for p, wn in zip(ports, wire_names):
+        if not wn.startswith("w_"):
+            continue
+        if p.width > 1:
+            wire_lines.append("wire [%d:0] %s;" % (p.width - 1, wn))
+        else:
+            wire_lines.append("wire %s;" % wn)
+
+    # Instance template
+    inst_lines = []
+    inst_lines.append("%s inst_%s(" % (name, name))
+    for i, (p, wn) in enumerate(zip(ports, wire_names)):
+        comma = "," if i < len(ports) - 1 else ""
+        # Comment with port info
+        comment = p.direction.value
+        if p.range_spec:
+            comment += " " + p.range_spec
+        inst_lines.append(
+            "  .%-*s (%-*s )%s // %s" % (
+                max_port, p.name,
+                max_wire, wn,
+                comma, comment,
+            )
+        )
+    inst_lines.append(");")
+
+    sections = []
+    if wire_lines:
+        sections.append("\n".join(wire_lines))
+    sections.append("\n".join(inst_lines))
+    return "\n\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# Port I/O table (io mode)
+# ---------------------------------------------------------------------------
+
+def format_io(result):
+    # type: (Dict[str, Any]) -> str
+    """Generate port I/O table from parse result.
+
+    Terminal table with Name, Width, Dir, Category columns.
+    Groups are separated by blank lines when direction changes.
+    """
+    from .data_model import ModuleInfo
+    mod = result.get("_module_info")  # type: ModuleInfo
+    if mod is None:
+        return _red("No module info for io table")
+
+    ports = mod.ports
+    if not ports:
+        return _yellow("Module '%s' has no ports." % mod.name)
+
+    lines = [_bold("Port I/O Table: %s (%d ports)" % (_cyan(mod.name), len(ports))), ""]
+
+    # Build rows with direction grouping
+    rows = []
+    last_dir = None
+    for p in ports:
+        dir_str = p.direction.value
+        if last_dir is not None and dir_str != last_dir:
+            rows.append(["", "", "", ""])  # blank separator
+        last_dir = dir_str
+
+        dir_short = {"input": "I", "output": "O", "inout": "IO"}.get(dir_str, dir_str)
+        width_str = str(p.width)
+        cat = p.category.value
+        rows.append([p.name, width_str, dir_short, cat])
+
+    lines.append(_table(["Name", "Width", "Dir", "Category"], rows, indent=2))
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Full terminal report
 # ---------------------------------------------------------------------------
 
@@ -256,6 +370,12 @@ def format_result(result, mode="full"):
     # Error in result?
     if "error" in result:
         return _red("Error: %s" % result["error"])
+
+    # Single-module modes
+    if mode == "inst":
+        return format_inst(result)
+    if mode == "io":
+        return format_io(result)
 
     sections.append(format_modules_summary(result))
 
