@@ -309,6 +309,10 @@ class Preprocessor:
                 return m.group(0)
             if name in self._macros:
                 return self._macros[name]
-            return m.group(0)
+            # Unknown macro: strip backtick so ANTLR sees a plain identifier
+            # instead of a directive token (which would be sent to the
+            # DIRECTIVES channel and become invisible to the parser).
+            logger.debug("Undefined macro `%s — treated as identifier", name)
+            return name
 
         return self._RE_MACRO_USAGE.sub(_repl, text)

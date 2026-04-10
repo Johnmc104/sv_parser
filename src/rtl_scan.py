@@ -197,15 +197,21 @@ def _resolve_top(modules, top_module):
     # type: (Dict[str, ModuleInfo], str) -> str
     """Resolve or auto-detect the top module."""
     if top_module:
+        if top_module not in modules:
+            logger.warning("Specified top module '%s' not found in parsed modules", top_module)
         return top_module
 
     tops = find_top_modules(modules)
     if len(tops) == 1:
         return tops[0]
     if tops:
-        return max(
+        # Prefer the module with most instances (deepest hierarchy)
+        best = max(
             tops,
             key=lambda n: len(modules[n].instances) if n in modules else 0)
+        logger.info("Auto-detected top: %s (from %d candidates: %s)",
+                     best, len(tops), ", ".join(sorted(tops)))
+        return best
     return list(modules.keys())[0] if modules else ""
 
 
@@ -217,8 +223,15 @@ def _build_result(modules, top, mode, directory, base_dir):
     # inst / io modes: detailed module info for the target module
     if mode in ("inst", "io"):
         target = modules.get(top) if top else None
+        if target is None and top:
+            # User explicitly requested a module that wasn't found
+            avail = sorted(modules.keys())
+            return {
+                "error": "Module '%s' not found. Available: %s"
+                         % (top, ", ".join(avail[:20])),
+            }
         if target is None:
-            # Fall back to first module
+            # No top specified ── fall back to first module
             target = next(iter(modules.values()))
         result["module"] = target.to_full_dict()
         result["top"] = target.name

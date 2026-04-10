@@ -175,3 +175,36 @@ def test_inst_mode():
     result = rtl_scan(file=fpath, mode="inst", top_module="uart_tx")
     assert "module" in result
     assert result["top"] == "uart_tx"
+
+
+def test_macro_instantiation():
+    """BUG-1: instances with macros in port connections must be detected."""
+    fpath = os.path.join(os.path.dirname(__file__), "fixtures", "macro_inst.v")
+    result = rtl_scan(file=fpath, mode="hierarchy", top_module="top_with_macros")
+    hierarchy = result.get("hierarchy", {})
+    top_node = hierarchy.get("top_with_macros", {})
+    inst_names = [i["instance"] for i in top_node.get("instances", [])]
+    assert "U_biu" in inst_names
+    assert "U_regfile" in inst_names
+    assert "U_txrx" in inst_names  # has undefined macro
+
+
+def test_inst_mode_respects_top():
+    """BUG-2: -t flag must select the correct module in inst/io modes."""
+    fpath = os.path.join(os.path.dirname(__file__), "fixtures", "macro_inst.v")
+    result = rtl_scan(file=fpath, mode="inst", top_module="sub_biu")
+    assert result["top"] == "sub_biu"
+
+
+def test_inst_mode_unknown_module_error():
+    """BUG-2: requesting a nonexistent module should return an error."""
+    fpath = os.path.join(os.path.dirname(__file__), "fixtures", "macro_inst.v")
+    result = rtl_scan(file=fpath, mode="inst", top_module="no_such_module")
+    assert "error" in result
+
+
+def test_macro_top_autodetect():
+    """BUG-3: auto-detect should pick the real top, not a leaf module."""
+    fpath = os.path.join(os.path.dirname(__file__), "fixtures", "macro_inst.v")
+    result = rtl_scan(file=fpath, mode="hierarchy")
+    assert result["top"] == "top_with_macros"
