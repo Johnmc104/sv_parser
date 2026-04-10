@@ -1,8 +1,8 @@
 {
   "design_metadata": {
     "name": "gpio_demo_top",
-    "version": "1.0",
-    "description": "GPIO Demo Design",
+    "version": "2.0",
+    "description": "Multi-Level Hierarchical GPIO Demo Design",
     "top_module": "gpio_demo_top"
   },
 
@@ -14,83 +14,462 @@
         {"name": "sys_rst_n", "direction": "input", "width": 1, "type": "reset"},
         {"name": "ahb_haddr", "direction": "input", "width": 32, "type": "address"},
         {"name": "ahb_hwdata", "direction": "input", "width": 32, "type": "data"},
+        {"name": "ahb_hwrite", "direction": "input", "width": 1, "type": "control"},
         {"name": "gpio_pins", "direction": "inout", "width": 16, "type": "gpio"},
         {"name": "ahb_hrdata", "direction": "output", "width": 32, "type": "data"},
+        {"name": "ahb_hready", "direction": "output", "width": 1, "type": "control"},
         {"name": "led_display", "direction": "output", "width": 8, "type": "display"},
-        {"name": "system_irq", "direction": "output", "width": 1, "type": "interrupt"}
+        {"name": "system_irq", "direction": "output", "width": 1, "type": "interrupt"},
+        {"name": "debug_out", "direction": "output", "width": 8, "type": "debug"}
       ],
       "internal_structure": {
         "instances": [
           {
-            "name": "u_clk_gen",
-            "module_type": "clk_generator"
+            "name": "u_clock_domain",
+            "module_type": "clock_domain_subsystem"
           },
           {
-            "name": "u_ahb_apb_bridge", 
-            "module_type": "ahb_to_apb_bridge"
+            "name": "u_bus_subsystem", 
+            "module_type": "bus_interconnect_subsystem"
           },
           {
-            "name": "u_gpio_ctrl",
-            "module_type": "cmsdk_iop_gpio"
+            "name": "u_peripheral_subsystem",
+            "module_type": "peripheral_subsystem"
           },
           {
-            "name": "u_irq_ctrl",
-            "module_type": "interrupt_controller"
-          },
-          {
-            "name": "u_led_driver",
-            "module_type": "led_driver"
+            "name": "u_control_subsystem",
+            "module_type": "control_subsystem"
           }
         ],
         "port_connections": [
           {
-            "net": "clk_main",
+            "net": "main_clk",
             "connections": [
-              {"type": "instance_port", "instance": "u_clk_gen", "port": "clk_out"},
-              {"type": "instance_port", "instance": "u_ahb_apb_bridge", "port": "hclk"},
-              {"type": "instance_port", "instance": "u_gpio_ctrl", "port": "HCLK"},
-              {"type": "instance_port", "instance": "u_irq_ctrl", "port": "clk"},
-              {"type": "instance_port", "instance": "u_led_driver", "port": "clk"}
+              {"type": "instance_port", "instance": "u_clock_domain", "port": "clk_out"},
+              {"type": "instance_port", "instance": "u_bus_subsystem", "port": "clk"},
+              {"type": "instance_port", "instance": "u_peripheral_subsystem", "port": "clk"},
+              {"type": "instance_port", "instance": "u_control_subsystem", "port": "clk"}
             ]
           },
           {
-            "net": "apb_addr_bus",
+            "net": "main_rst_n",
             "connections": [
-              {"type": "instance_port", "instance": "u_ahb_apb_bridge", "port": "paddr"},
-              {"type": "instance_port", "instance": "u_gpio_ctrl", "port": "PADDR"}
+              {"type": "instance_port", "instance": "u_clock_domain", "port": "rst_out"},
+              {"type": "instance_port", "instance": "u_bus_subsystem", "port": "rst_n"},
+              {"type": "instance_port", "instance": "u_peripheral_subsystem", "port": "rst_n"},
+              {"type": "instance_port", "instance": "u_control_subsystem", "port": "rst_n"}
             ]
           },
           {
-            "net": "apb_data_bus",
+            "net": "ahb_to_subsystem",
             "connections": [
-              {"type": "instance_port", "instance": "u_ahb_apb_bridge", "port": "pwdata"},
-              {"type": "instance_port", "instance": "u_gpio_ctrl", "port": "PWDATA"}
+              {"type": "instance_port", "instance": "u_bus_subsystem", "port": "ahb_out"},
+              {"type": "instance_port", "instance": "u_peripheral_subsystem", "port": "bus_in"}
             ]
           },
           {
-            "net": "gpio_interrupt",
+            "net": "peripheral_irq",
             "connections": [
-              {"type": "instance_port", "instance": "u_gpio_ctrl", "port": "GPIOINT"},
-              {"type": "instance_port", "instance": "u_irq_ctrl", "port": "irq_in"}
+              {"type": "instance_port", "instance": "u_peripheral_subsystem", "port": "irq_out"},
+              {"type": "instance_port", "instance": "u_control_subsystem", "port": "irq_in"}
             ]
           },
           {
-            "net": "gpio_data",
+            "net": "gpio_data_internal",
             "connections": [
-              {"type": "instance_port", "instance": "u_gpio_ctrl", "port": "PORTOUT"},
-              {"type": "instance_port", "instance": "u_led_driver", "port": "gpio_data"}
+              {"type": "instance_port", "instance": "u_peripheral_subsystem", "port": "gpio_out"},
+              {"type": "instance_port", "instance": "u_control_subsystem", "port": "gpio_in"}
             ]
           }
         ]
       }
     },
 
-    "clk_generator": {
-      "module_type": "utility",
+    "clock_domain_subsystem": {
+      "module_type": "subsystem",
+      "ports": [
+        {"name": "clk_in", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_in", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "clk_out", "direction": "output", "width": 1, "type": "clock"},
+        {"name": "rst_out", "direction": "output", "width": 1, "type": "reset"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_pll",
+            "module_type": "phase_locked_loop"
+          },
+          {
+            "name": "u_clock_tree",
+            "module_type": "clock_tree_buffer"
+          },
+          {
+            "name": "u_reset_gen",
+            "module_type": "reset_generator"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "pll_clk",
+            "connections": [
+              {"type": "instance_port", "instance": "u_pll", "port": "clk_out"},
+              {"type": "instance_port", "instance": "u_clock_tree", "port": "clk_in"}
+            ]
+          },
+          {
+            "net": "buffered_clk",
+            "connections": [
+              {"type": "instance_port", "instance": "u_clock_tree", "port": "clk_out"},
+              {"type": "instance_port", "instance": "u_reset_gen", "port": "clk"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "bus_interconnect_subsystem": {
+      "module_type": "subsystem", 
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "ahb_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "ahb_out", "direction": "output", "width": 64, "type": "bus"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_ahb_decoder",
+            "module_type": "ahb_address_decoder"
+          },
+          {
+            "name": "u_ahb_mux",
+            "module_type": "ahb_multiplexer"
+          },
+          {
+            "name": "u_ahb_apb_bridge",
+            "module_type": "ahb_to_apb_bridge"
+          },
+          {
+            "name": "u_bus_monitor",
+            "module_type": "bus_performance_monitor"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "decoded_addr",
+            "connections": [
+              {"type": "instance_port", "instance": "u_ahb_decoder", "port": "decoded_out"},
+              {"type": "instance_port", "instance": "u_ahb_mux", "port": "select_in"}
+            ]
+          },
+          {
+            "net": "ahb_to_apb",
+            "connections": [
+              {"type": "instance_port", "instance": "u_ahb_mux", "port": "ahb_out"},
+              {"type": "instance_port", "instance": "u_ahb_apb_bridge", "port": "ahb_in"}
+            ]
+          },
+          {
+            "net": "bus_activity",
+            "connections": [
+              {"type": "instance_port", "instance": "u_ahb_mux", "port": "activity"},
+              {"type": "instance_port", "instance": "u_bus_monitor", "port": "activity_in"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "peripheral_subsystem": {
+      "module_type": "subsystem",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "bus_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "gpio_pins", "direction": "inout", "width": 16, "type": "gpio"},
+        {"name": "gpio_out", "direction": "output", "width": 16, "type": "gpio"},
+        {"name": "irq_out", "direction": "output", "width": 4, "type": "interrupt"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_gpio_complex",
+            "module_type": "gpio_complex"
+          },
+          {
+            "name": "u_timer_complex",
+            "module_type": "timer_complex"
+          },
+          {
+            "name": "u_uart_complex",
+            "module_type": "uart_complex"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "apb_bus_gpio",
+            "connections": [
+              {"type": "module_port", "port": "bus_in"},
+              {"type": "instance_port", "instance": "u_gpio_complex", "port": "apb_in"}
+            ]
+          },
+          {
+            "net": "apb_bus_timer",
+            "connections": [
+              {"type": "module_port", "port": "bus_in"},
+              {"type": "instance_port", "instance": "u_timer_complex", "port": "apb_in"}
+            ]
+          },
+          {
+            "net": "apb_bus_uart",
+            "connections": [
+              {"type": "module_port", "port": "bus_in"},
+              {"type": "instance_port", "instance": "u_uart_complex", "port": "apb_in"}
+            ]
+          },
+          {
+            "net": "gpio_irq_combined",
+            "connections": [
+              {"type": "instance_port", "instance": "u_gpio_complex", "port": "irq_out"},
+              {"type": "instance_port", "instance": "u_timer_complex", "port": "irq_out"},
+              {"type": "instance_port", "instance": "u_uart_complex", "port": "irq_out"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "control_subsystem": {
+      "module_type": "subsystem",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "irq_in", "direction": "input", "width": 4, "type": "interrupt"},
+        {"name": "gpio_in", "direction": "input", "width": 16, "type": "gpio"},
+        {"name": "system_irq", "direction": "output", "width": 1, "type": "interrupt"},
+        {"name": "led_out", "direction": "output", "width": 8, "type": "display"},
+        {"name": "debug_out", "direction": "output", "width": 8, "type": "debug"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_irq_manager",
+            "module_type": "interrupt_manager"
+          },
+          {
+            "name": "u_display_controller",
+            "module_type": "display_controller"
+          },
+          {
+            "name": "u_debug_interface",
+            "module_type": "debug_interface"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "processed_irq",
+            "connections": [
+              {"type": "instance_port", "instance": "u_irq_manager", "port": "irq_out"},
+              {"type": "instance_port", "instance": "u_display_controller", "port": "irq_trigger"},
+              {"type": "instance_port", "instance": "u_debug_interface", "port": "irq_monitor"}
+            ]
+          },
+          {
+            "net": "display_data",
+            "connections": [
+              {"type": "instance_port", "instance": "u_display_controller", "port": "gpio_data"},
+              {"type": "instance_port", "instance": "u_debug_interface", "port": "status_in"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "gpio_complex": {
+      "module_type": "complex",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "apb_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "gpio_pins", "direction": "inout", "width": 16, "type": "gpio"},
+        {"name": "gpio_out", "direction": "output", "width": 16, "type": "gpio"},
+        {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_gpio_core",
+            "module_type": "cmsdk_iop_gpio"
+          },
+          {
+            "name": "u_gpio_filter",
+            "module_type": "gpio_input_filter"
+          },
+          {
+            "name": "u_gpio_driver",
+            "module_type": "gpio_output_driver"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "filtered_gpio",
+            "connections": [
+              {"type": "instance_port", "instance": "u_gpio_filter", "port": "gpio_out"},
+              {"type": "instance_port", "instance": "u_gpio_core", "port": "PORTIN"}
+            ]
+          },
+          {
+            "net": "gpio_core_out",
+            "connections": [
+              {"type": "instance_port", "instance": "u_gpio_core", "port": "PORTOUT"},
+              {"type": "instance_port", "instance": "u_gpio_driver", "port": "gpio_in"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "timer_complex": {
+      "module_type": "complex",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "apb_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_timer0",
+            "module_type": "basic_timer"
+          },
+          {
+            "name": "u_timer1",
+            "module_type": "basic_timer"
+          },
+          {
+            "name": "u_watchdog",
+            "module_type": "watchdog_timer"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "timer_irq_combined",
+            "connections": [
+              {"type": "instance_port", "instance": "u_timer0", "port": "irq"},
+              {"type": "instance_port", "instance": "u_timer1", "port": "irq"},
+              {"type": "instance_port", "instance": "u_watchdog", "port": "irq"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "interrupt_manager": {
+      "module_type": "manager",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "irq_in", "direction": "input", "width": 4, "type": "interrupt"},
+        {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_irq_arbiter",
+            "module_type": "interrupt_arbiter"
+          },
+          {
+            "name": "u_irq_prioritizer",
+            "module_type": "interrupt_prioritizer"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "arbitrated_irq",
+            "connections": [
+              {"type": "instance_port", "instance": "u_irq_arbiter", "port": "irq_out"},
+              {"type": "instance_port", "instance": "u_irq_prioritizer", "port": "irq_in"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "display_controller": {
+      "module_type": "controller",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "gpio_data", "direction": "input", "width": 16, "type": "gpio"},
+        {"name": "irq_trigger", "direction": "input", "width": 1, "type": "interrupt"},
+        {"name": "led_out", "direction": "output", "width": 8, "type": "display"}
+      ],
+      "internal_structure": {
+        "instances": [
+          {
+            "name": "u_led_driver",
+            "module_type": "led_driver"
+          },
+          {
+            "name": "u_pattern_gen",
+            "module_type": "pattern_generator"
+          }
+        ],
+        "port_connections": [
+          {
+            "net": "led_pattern",
+            "connections": [
+              {"type": "instance_port", "instance": "u_pattern_gen", "port": "pattern_out"},
+              {"type": "instance_port", "instance": "u_led_driver", "port": "pattern_in"}
+            ]
+          }
+        ]
+      }
+    },
+
+    "phase_locked_loop": {
+      "module_type": "analog",
       "ports": [
         {"name": "clk_in", "direction": "input", "width": 1, "type": "clock"},
         {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "clk_out", "direction": "output", "width": 1, "type": "clock"},
+        {"name": "locked", "direction": "output", "width": 1, "type": "status"}
+      ]
+    },
+
+    "clock_tree_buffer": {
+      "module_type": "utility",
+      "ports": [
+        {"name": "clk_in", "direction": "input", "width": 1, "type": "clock"},
         {"name": "clk_out", "direction": "output", "width": 1, "type": "clock"}
+      ]
+    },
+
+    "reset_generator": {
+      "module_type": "utility",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_in", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "rst_out", "direction": "output", "width": 1, "type": "reset"}
+      ]
+    },
+
+    "ahb_address_decoder": {
+      "module_type": "decoder",
+      "ports": [
+        {"name": "haddr", "direction": "input", "width": 32, "type": "address"},
+        {"name": "decoded_out", "direction": "output", "width": 4, "type": "control"}
+      ]
+    },
+
+    "ahb_multiplexer": {
+      "module_type": "multiplexer",
+      "ports": [
+        {"name": "select_in", "direction": "input", "width": 4, "type": "control"},
+        {"name": "data_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "ahb_out", "direction": "output", "width": 64, "type": "bus"},
+        {"name": "activity", "direction": "output", "width": 1, "type": "status"}
       ]
     },
 
@@ -98,11 +477,17 @@
       "module_type": "bridge",
       "ports": [
         {"name": "hclk", "direction": "input", "width": 1, "type": "clock"},
-        {"name": "haddr", "direction": "input", "width": 32, "type": "address"},
-        {"name": "hwdata", "direction": "input", "width": 32, "type": "data"},
-        {"name": "hrdata", "direction": "output", "width": 32, "type": "data"},
-        {"name": "paddr", "direction": "output", "width": 32, "type": "address"},
-        {"name": "pwdata", "direction": "output", "width": 32, "type": "data"}
+        {"name": "ahb_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "apb_out", "direction": "output", "width": 64, "type": "bus"}
+      ]
+    },
+
+    "bus_performance_monitor": {
+      "module_type": "monitor",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "activity_in", "direction": "input", "width": 1, "type": "status"},
+        {"name": "performance_out", "direction": "output", "width": 16, "type": "debug"}
       ]
     },
 
@@ -119,12 +504,68 @@
       ]
     },
 
-    "interrupt_controller": {
-      "module_type": "controller",
+    "gpio_input_filter": {
+      "module_type": "filter",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "gpio_in", "direction": "input", "width": 16, "type": "gpio"},
+        {"name": "gpio_out", "direction": "output", "width": 16, "type": "gpio"}
+      ]
+    },
+
+    "gpio_output_driver": {
+      "module_type": "driver",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "gpio_in", "direction": "input", "width": 16, "type": "gpio"},
+        {"name": "gpio_out", "direction": "output", "width": 16, "type": "gpio"}
+      ]
+    },
+
+    "basic_timer": {
+      "module_type": "timer",
       "ports": [
         {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
         {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
-        {"name": "irq_in", "direction": "input", "width": 16, "type": "interrupt"},
+        {"name": "enable", "direction": "input", "width": 1, "type": "control"},
+        {"name": "irq", "direction": "output", "width": 1, "type": "interrupt"}
+      ]
+    },
+
+    "watchdog_timer": {
+      "module_type": "timer",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "kick", "direction": "input", "width": 1, "type": "control"},
+        {"name": "irq", "direction": "output", "width": 1, "type": "interrupt"}
+      ]
+    },
+
+    "uart_complex": {
+      "module_type": "complex",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "apb_in", "direction": "input", "width": 64, "type": "bus"},
+        {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
+      ]
+    },
+
+    "interrupt_arbiter": {
+      "module_type": "arbiter",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "irq_in", "direction": "input", "width": 4, "type": "interrupt"},
+        {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
+      ]
+    },
+
+    "interrupt_prioritizer": {
+      "module_type": "prioritizer",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "irq_in", "direction": "input", "width": 1, "type": "interrupt"},
         {"name": "irq_out", "direction": "output", "width": 1, "type": "interrupt"}
       ]
     },
@@ -134,8 +575,29 @@
       "ports": [
         {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
         {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
-        {"name": "gpio_data", "direction": "input", "width": 8, "type": "data"},
+        {"name": "pattern_in", "direction": "input", "width": 8, "type": "data"},
         {"name": "led_out", "direction": "output", "width": 8, "type": "display"}
+      ]
+    },
+
+    "pattern_generator": {
+      "module_type": "generator",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "trigger", "direction": "input", "width": 1, "type": "control"},
+        {"name": "pattern_out", "direction": "output", "width": 8, "type": "data"}
+      ]
+    },
+
+    "debug_interface": {
+      "module_type": "interface",
+      "ports": [
+        {"name": "clk", "direction": "input", "width": 1, "type": "clock"},
+        {"name": "rst_n", "direction": "input", "width": 1, "type": "reset"},
+        {"name": "irq_monitor", "direction": "input", "width": 1, "type": "interrupt"},
+        {"name": "status_in", "direction": "input", "width": 8, "type": "data"},
+        {"name": "debug_out", "direction": "output", "width": 8, "type": "debug"}
       ]
     }
   }
