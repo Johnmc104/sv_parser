@@ -208,3 +208,23 @@ def test_macro_top_autodetect():
     fpath = os.path.join(os.path.dirname(__file__), "fixtures", "macro_inst.v")
     result = rtl_scan(file=fpath, mode="hierarchy")
     assert result["top"] == "top_with_macros"
+
+
+def test_guarded_include_with_macros():
+    """BUG-1 root cause: include inside ifdef guard must not truncate content.
+
+    Simulates DW_apb_ssi pattern: `ifndef guard -> `include defs -> `endif.
+    The include expands to many more lines than the ifdef block — the
+    preprocessor must not truncate the expansion.
+    """
+    fpath = os.path.join(os.path.dirname(__file__), "fixtures", "guarded_include.v")
+    result = rtl_scan(file=fpath, mode="hierarchy", top_module="guarded_top")
+    # Module must be found (was previously lost due to truncation)
+    mod_names = [m["name"] for m in result.get("modules", [])]
+    assert "guarded_top" in mod_names
+    assert "guarded_sub" in mod_names
+    # Instance must be detected
+    hierarchy = result.get("hierarchy", {})
+    top_node = hierarchy.get("guarded_top", {})
+    inst_names = [i["instance"] for i in top_node.get("instances", [])]
+    assert "U_sub" in inst_names

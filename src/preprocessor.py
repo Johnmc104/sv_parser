@@ -250,10 +250,13 @@ class Preprocessor:
                 selected = self._process(text, filename, depth=0).split("\n")
                 done = True
 
+        # Pad with empty lines so that short branches (no includes) preserve
+        # source line alignment.  Never truncate — includes inside a
+        # conditional can expand to far more lines than the original block.
         total = i - start
         while len(selected) < total:
             selected.append("")
-        return selected[:total], i
+        return selected, i
 
     def _handle_include(
         self, line: str, filename: str, depth: int
