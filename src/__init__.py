@@ -14,6 +14,8 @@ Modules:
   formatter       Terminal-friendly output formatters
 """
 
+from .version import __version__, __author__, __email__
+
 from .port_classify import PortDirection, PortCategory, classify_port
 from .data_model import (
     PortInfo, ParameterInfo, ConnectionInfo,

@@ -35,6 +35,7 @@ if _project_root not in sys.path:
 from src.rtl_scan import rtl_scan
 from src.formatter import format_result, set_color
 from src.log import setup_logging
+from src.version import __version__
 
 
 _ALL_MODES = ["modules", "hierarchy", "ports", "filelist", "full", "inst", "io"]
@@ -134,6 +135,9 @@ examples:
     p.add_argument("-q", "--quiet",
                     action="store_true",
                     help="suppress log output (errors only)")
+    p.add_argument("-V", "--version",
+                    action="version",
+                    version="%(prog)s " + __version__)
     return p
 
 

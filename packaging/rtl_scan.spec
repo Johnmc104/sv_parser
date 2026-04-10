@@ -20,6 +20,7 @@ a = Analysis(
     datas=[],
     hiddenimports=[
         'src',
+        'src.version',
         'src.port_classify',
         'src.data_model',
         'src.preprocessor',

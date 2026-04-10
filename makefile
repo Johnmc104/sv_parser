@@ -54,9 +54,7 @@ run:
 	@python3 -m src $(ARGS)
 
 test:
-	python3 test/test_gpio.py
-	python3 test/test_multi.py
-	python3 test/test_rtl_scan.py
+	python3 -m pytest test/ -v
 
 # ---- clean ----
 

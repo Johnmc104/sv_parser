@@ -9,6 +9,9 @@ description = "Verilog/SystemVerilog RTL structure analysis tool"
 readme = "README.md"
 requires-python = ">=3.6"
 license = {text = "MIT"}
+authors = [
+    {name = "zhhe", email = "Johnmc104@qq.com"},
+]
 
 dependencies = [
     "antlr4-python3-runtime==4.13.1",
