@@ -9,8 +9,9 @@ Scans a directory of Verilog files and produces:
 
 Usage::
 
-    from src.rtl_scan import rtl_scan
-    result = rtl_scan("/path/to/rtl", top_module="top", mode="full")
+    from src.rtl_scan import rtl_scan, rtl_scan_json
+    result_dict = rtl_scan("/path/to/rtl", top_module="top", mode="full")
+    result_json = rtl_scan_json("/path/to/rtl", mode="full")
 """
 
 import json
@@ -41,8 +42,8 @@ def rtl_scan(
     defines=None,
     include_dirs=None,
 ):
-    # type: (str, str, str, str, Optional[Dict[str, str]], Optional[List[str]]) -> str
-    """Scan an RTL directory and return structured JSON analysis.
+    # type: (str, str, str, str, Optional[Dict[str, str]], Optional[List[str]]) -> Dict[str, Any]
+    """Scan an RTL directory and return structured analysis dict.
 
     Args:
         directory:    RTL source directory path
@@ -58,12 +59,11 @@ def rtl_scan(
         include_dirs: Extra +incdir+ search paths
 
     Returns:
-        JSON string with analysis results.
+        Dict with analysis results.
     """
     directory = os.path.abspath(directory)
     if not os.path.isdir(directory):
-        return json.dumps(
-            {"error": "Directory not found: %s" % directory}, indent=2)
+        return {"error": "Directory not found: %s" % directory}
 
     # --- setup preprocessor ---
     pp = Preprocessor()
@@ -76,8 +76,7 @@ def rtl_scan(
     # --- discover & parse ---
     files = discover_rtl_files(directory)
     if not files:
-        return json.dumps(
-            {"error": "No RTL files found", "directory": directory}, indent=2)
+        return {"error": "No RTL files found", "directory": directory}
 
     parser = VerilogFileParser(preprocessor=pp)
     all_modules = parser.parse_files(files)
@@ -96,6 +95,27 @@ def rtl_scan(
     if parser.errors:
         result["parse_errors"] = parser.errors
 
+    return result
+
+
+def rtl_scan_json(
+    directory,
+    top_module="",
+    base_dir="",
+    mode="full",
+    defines=None,
+    include_dirs=None,
+):
+    # type: (str, str, str, str, Optional[Dict[str, str]], Optional[List[str]]) -> str
+    """Same as rtl_scan() but returns a JSON string."""
+    result = rtl_scan(
+        directory,
+        top_module=top_module,
+        base_dir=base_dir,
+        mode=mode,
+        defines=defines,
+        include_dirs=include_dirs,
+    )
     return json.dumps(result, indent=2, ensure_ascii=False)
 
 

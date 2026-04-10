@@ -18,25 +18,45 @@ verilog= \
 
 ifeq (${language}, systemverilog)
 language_lib=${systemverilog}
-python_cmd=run_sv.py test.sv
 else ifeq (${language}, verilog)
 language_lib=${verilog}
-python_cmd=run_v.py test.v
 endif
 
-python:pip3 install antlr4-python3-runtime==${antlr_version}
+# ---- ANTLR grammar ----
 
-test:
+python:
+	pip3 install antlr4-python3-runtime==${antlr_version}
+
+test-antlr:
 	java org.antlr.v4.Tool
 
 gen:
 	${antlr4} -no-listener -visitor -Dlanguage=Python3 ${language_lib}
 
-run:
-	@python3 ${python_cmd}
+# ---- rtl_scan CLI ----
 
-files:
-	python3 vtool.py -f filelist -top cmsdk_ahb_gpio
+run:
+	@python3 -m src $(ARGS)
+
+test:
+	python3 test/test_gpio.py
+	python3 test/test_multi.py
+	python3 test/test_rtl_scan.py
+
+# ---- build binary ----
 
 build:
-	pyinstaller run_v.py --onefile --clean -n vtool_inst
+	pyinstaller rtl_scan.spec --clean
+
+install: build
+	@cp -v dist/rtl_scan /usr/local/bin/rtl_scan 2>/dev/null || \
+	 cp -v dist/rtl_scan $$HOME/.local/bin/rtl_scan
+	@echo "Installed: $$(which rtl_scan 2>/dev/null || echo $$HOME/.local/bin/rtl_scan)"
+
+clean:
+	rm -rf build/ dist/ __pycache__ src/__pycache__
+
+# ---- convenience ----
+
+help:
+	@python3 -m src --help

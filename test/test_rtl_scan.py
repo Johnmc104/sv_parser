@@ -88,13 +88,12 @@ module soc_top_tb;
 endmodule
 """)
 
-# Run rtl_scan
-result_json = rtl_scan(
+# Run rtl_scan (returns dict directly)
+result = rtl_scan(
     tmpdir,
     mode="full",
     defines={"USE_PLL": ""},
 )
-result = json.loads(result_json)
 
 print("\n--- JSON result (condensed) ---")
 print("Modules:", [m["name"] for m in result["modules"]])
