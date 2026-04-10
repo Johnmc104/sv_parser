@@ -1,6 +1,6 @@
 #need java11
 language=verilog
-antlr_version=4.8
+antlr_version=4.13.1
 export CLASSPATH=/home/zhhe/work/sv_parser/antlr/antlr-${antlr_version}-complete.jar
 
 #antlr4=java -jar antlr/antlr-4.8-complete.jar

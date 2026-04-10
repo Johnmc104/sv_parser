@@ -21,4 +21,7 @@ build
 
 *.docx
 
-src/__pycache__
+__pycache__
+
+frontend/node_modules
+backend/*.json
