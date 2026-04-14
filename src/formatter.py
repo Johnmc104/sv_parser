@@ -292,7 +292,24 @@ def format_inst(result):
 
     # Instance template
     inst_lines = []
-    inst_lines.append("%s inst_%s(" % (name, name))
+    params = [p for p in mod.parameters if p.param_type == "parameter"]
+    if params:
+        max_param = max(len(p.name) for p in params)
+        max_val = max(len(p.value) for p in params) if any(p.value for p in params) else 1
+        inst_lines.append("%s #(" % name)
+        for i, par in enumerate(params):
+            comma = "," if i < len(params) - 1 else ""
+            val = par.value if par.value else ""
+            inst_lines.append(
+                "  .%-*s (%-*s )%s" % (
+                    max_param, par.name,
+                    max_val, val,
+                    comma,
+                )
+            )
+        inst_lines.append(") inst_%s (" % name)
+    else:
+        inst_lines.append("%s inst_%s(" % (name, name))
     for i, (p, wn) in enumerate(zip(ports, wire_names)):
         comma = "," if i < len(ports) - 1 else ""
         # Comment with port info
